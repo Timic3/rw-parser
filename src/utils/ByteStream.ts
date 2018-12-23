@@ -24,4 +24,26 @@ export class ByteStream {
         this._cursor += 4;
         return uint32;
     }
+
+    public readFloat() {
+        const float = this._stream.readFloatLE(this._cursor);
+        this._cursor += 4;
+        return float;
+    }
+
+    public readString(size?: number) {
+        let string = '';
+
+        if (size) {
+            for (let i = 0; i < size; i++) {
+                //console.log(this._stream[this._cursor]);
+                string += String.fromCharCode(this._stream[this._cursor++]);
+            }
+        } else {
+            while (this._stream[this._cursor] != 0) {
+                string += String.fromCharCode(this._stream[this._cursor++]);
+            }
+        }
+        return string;
+    }
 }
