@@ -78,22 +78,139 @@ export class RwFile extends ByteStream {
         console.log(this.readSectionHeader());
         console.log(this.readSectionHeader());
 
-        //this._cursor += 11576;
-
-        //console.log(this.readSectionHeader());
-
-        const flags = this.readUint16();
-        this._cursor += 2; // Skip - not used
-
-        console.log(flags);
-        console.log(this.readUint32());
-        console.log(this.readUint32());
-        console.log(this.readUint32());
+        const flags = this.readUint32();
+        const triangleCount = this.readUint32();
+        const vertexCount = this.readUint32();
+        const morphTargetCount = this.readUint32();
 
         // TODO: Parse ambient, specular and diffuse if version < 0x34000 here
+        /*
+        const ambient = this.readFloat();
+        const specular = this.readFloat();
+        const diffuse = this.readFloat();
+        */
 
-        
+       const colorInformation = [];
+       const textureMappingInformation = [];
+       const faceInformation = [];
 
-        return [numberOfGeometricObjects];
+        if ((flags & 0x01000000) == 0) {
+            if (flags & 0x08) { // Vertex Prelit
+                for (let i = 0; i < vertexCount; i++) {
+                    colorInformation[i] = [] as number[];
+                    // R, G, B, A
+                    colorInformation[i][0] = this.readUint8();
+                    colorInformation[i][1] = this.readUint8();
+                    colorInformation[i][2] = this.readUint8();
+                    colorInformation[i][3] = this.readUint8();
+                }
+            }
+
+            // if (flags & (0x04 | 0x00000080)) { // Vertex Textured | Vertex Textured 2
+            if (flags & 0x04) { // Vertex Textured
+                for (let i = 0; i < vertexCount; i++) {
+                    textureMappingInformation[i] = [] as number[];
+                    // U, V
+                    textureMappingInformation[i][0] = this.readFloat();
+                    textureMappingInformation[i][1] = this.readFloat();
+                }
+            }
+
+            for (let i = 0; i < triangleCount; i++) {
+                faceInformation[i] = [] as number[];
+                // Vertex 2, Vertex 1, Material ID / Flags, Vertex 3
+                faceInformation[i][0] = this.readUint16();
+                faceInformation[i][1] = this.readUint16();
+                faceInformation[i][2] = this.readUint16();
+                faceInformation[i][3] = this.readUint16();
+            }
+        }
+
+        // TODO: Repeat according to morphTargetCount
+
+        const boundingSphere = []
+        // X, Y, Z, Radius
+        boundingSphere[0] = this.readFloat();
+        boundingSphere[1] = this.readFloat();
+        boundingSphere[2] = this.readFloat();
+        boundingSphere[3] = this.readFloat();
+
+        const hasPosition = this.readUint32();
+        const hasNormals = this.readUint32();
+
+        const vertexInformation = [];
+        for (let i = 0; i < vertexCount; i++) {
+            vertexInformation[i] = [] as number[];
+            // X, Y, Z
+            vertexInformation[i][0] = this.readFloat();
+            vertexInformation[i][1] = this.readFloat();
+            vertexInformation[i][2] = this.readFloat();
+        }
+
+        const normalInformation = [];
+        if (flags & 0x10) { // Vertex Normals
+            for (let i = 0; i < vertexCount; i++) {
+                normalInformation[i] = [] as number[];
+                // X, Y, Z
+                normalInformation[i][0] = this.readFloat();
+                normalInformation[i][1] = this.readFloat();
+                normalInformation[i][2] = this.readFloat();
+            }
+        }
+
+        return [
+            numberOfGeometricObjects,
+            colorInformation,
+            textureMappingInformation,
+            faceInformation,
+            boundingSphere,
+            hasPosition, hasNormals,
+            vertexInformation,
+            normalInformation
+        ];
+    }
+
+    public readMaterialListData() {
+        const materialInstanceCount = this.readUint32();
+        for (let i = 0; i < materialInstanceCount; i++) {
+            // TODO: Store material instances accordingly
+            this._cursor += 4;
+        }
+        console.log(this.readSectionHeader());
+        console.log(this.readSectionHeader());
+
+        const materialData = this.readMaterialData();
+
+        return [materialInstanceCount, materialData];
+    }
+
+    public readMaterialData() {
+        // Flags - not used
+        this._cursor += 4;
+
+        const color = [];
+        color[0] = this.readUint8();
+        color[1] = this.readUint8();
+        color[2] = this.readUint8();
+        color[3] = this.readUint8();
+
+        // Unknown - not used
+        this._cursor += 4;
+
+        const isTextured = this.readUint32();
+
+        // TODO: if version > 0x30400
+        const ambient = this.readFloat();
+        const specular = this.readFloat();
+        const diffuse = this.readFloat();
+
+        return [color, isTextured, ambient, specular, diffuse];
+    }
+
+    public readTextureData() {
+        const textureFilterFlags = this.readUint16();
+        // Unknown - not used
+        this._cursor += 2;
+        return textureFilterFlags;
     }
 }
