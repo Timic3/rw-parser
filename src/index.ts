@@ -2,7 +2,7 @@
 import fs = require('fs');
 import { RwFile } from './renderware/RwFile';
 
-const buffer = fs.readFileSync('./assets/infernus.dff');
+const buffer = fs.readFileSync('./assets/infernus2.dff');
 
 const dffStream = new RwFile(buffer);
 
@@ -18,18 +18,22 @@ console.log(dffStream.readSectionHeader());
 // + RwStruct
 console.log(dffStream.readSectionHeader());
 // ++ Data
-console.log(dffStream.readFrameData());
+const frameListData = dffStream.readFrameListData();
+console.log(frameListData);
 
-// + RwExtension
-console.log(dffStream.readSectionHeader());
-// ++ RwFrame
-const node1 = dffStream.readSectionHeader();
-console.log(node1);
-console.log(dffStream.readString(node1.sectionSize));
+// Components presumably
+for (let i = 0; i < frameListData.numberOfFrames; i++) {
+    // + RwExtension
+    console.log(dffStream.readSectionHeader());
+    // ++ RwFrame
+    const node = dffStream.readSectionHeader();
+    console.log(node);
+    console.log(dffStream.readString(node.sectionSize));
+}
 
-// + RwExtension
+// RwGeometryList
 console.log(dffStream.readSectionHeader());
-// ++ RwFrame
-const node2 = dffStream.readSectionHeader();
-console.log(node2);
-console.log(dffStream.readString(node2.sectionSize));
+// + RwStruct
+console.log(dffStream.readSectionHeader());
+// ++ Data
+console.log(dffStream.readGeometryListData());

@@ -20,7 +20,7 @@ export class ByteStream {
     }
 
     public readUint32() {
-        const uint32 = this._stream.readInt32LE(this._cursor);
+        const uint32 = this._stream.readUInt32LE(this._cursor);
         this._cursor += 4;
         return uint32;
     }
@@ -31,19 +31,9 @@ export class ByteStream {
         return float;
     }
 
-    public readString(size?: number) {
-        let string = '';
-
-        if (size) {
-            for (let i = 0; i < size; i++) {
-                //console.log(this._stream[this._cursor]);
-                string += String.fromCharCode(this._stream[this._cursor++]);
-            }
-        } else {
-            while (this._stream[this._cursor] != 0) {
-                string += String.fromCharCode(this._stream[this._cursor++]);
-            }
-        }
+    public readString(size: number) {
+        const string = this._stream.toString('ascii', this._cursor, this._cursor + size);
+        this._cursor += size;
         return string;
     }
 }

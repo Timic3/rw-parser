@@ -45,12 +45,13 @@ export class RwFile extends ByteStream {
         return { objectCount }
     }
 
-    public readFrameData(): RwFrameListData {
+    public readFrameListData(): RwFrameListData {
         const numberOfFrames = this.readUint32();
 
         let frames = Array<RwFrame>();
 
         for (let i = 0; i < numberOfFrames; i++) {
+            // All these could probably be moved to readFrameData()
             const rotationMatrix = [];
             for (let i = 0; i < 9; i++) {
                 rotationMatrix[i] = this.readFloat();
@@ -70,5 +71,29 @@ export class RwFile extends ByteStream {
         }
         
         return { numberOfFrames, frames }
+    }
+
+    public readGeometryListData() {
+        const numberOfGeometricObjects = this.readUint32();
+        console.log(this.readSectionHeader());
+        console.log(this.readSectionHeader());
+
+        //this._cursor += 11576;
+
+        //console.log(this.readSectionHeader());
+
+        const flags = this.readUint16();
+        this._cursor += 2; // Skip - not used
+
+        console.log(flags);
+        console.log(this.readUint32());
+        console.log(this.readUint32());
+        console.log(this.readUint32());
+
+        // TODO: Parse ambient, specular and diffuse if version < 0x34000 here
+
+        
+
+        return [numberOfGeometricObjects];
     }
 }
