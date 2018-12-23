@@ -4,7 +4,7 @@ import { RwFile } from './renderware/RwFile';
 
 const buffer = fs.readFileSync('./assets/infernus.dff');
 
-const dffStream = new RwFile(new Uint8Array(buffer));
+const dffStream = new RwFile(buffer);
 
 // RwClump
 console.log(dffStream.readSectionHeader());

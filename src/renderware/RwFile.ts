@@ -19,7 +19,7 @@ interface RwFrameListData {
 
 export class RwFile extends ByteStream {
 
-    constructor(stream: Uint8Array) {
+    constructor(stream: Buffer) {
         super(stream);
     }
 
