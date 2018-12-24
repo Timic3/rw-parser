@@ -30,15 +30,128 @@ for (let i = 0; i < frameListData.numberOfFrames; i++) {
     console.log(node);
     console.log(dffStream.readString(node.sectionSize));
 }
-
+/*
 // RwGeometryList
 console.log(dffStream.readSectionHeader());
 // + RwStruct
 console.log(dffStream.readSectionHeader());
 // ++ Data
-console.log(dffStream.readGeometryListData());
+*/
 
-// RwMaterialList
+// Tyre
+const geoList = dffStream.readSectionHeader();
+console.log(geoList);
+console.log(dffStream.readSectionHeader());
+console.log(dffStream.readUint32());
+const tyre = dffStream.readSectionHeader();
+console.log(tyre);
+dffStream._cursor += tyre.sectionSize;
+
+let unk = dffStream.readSectionHeader();
+console.log(unk);
+dffStream._cursor += unk.sectionSize;
+
+unk = dffStream.readSectionHeader();
+console.log(unk);
+dffStream._cursor += unk.sectionSize;
+
+unk = dffStream.readSectionHeader();
+console.log(unk);
+dffStream._cursor += unk.sectionSize;
+
+unk = dffStream.readSectionHeader();
+console.log(unk);
+dffStream._cursor += unk.sectionSize;
+
+unk = dffStream.readSectionHeader();
+console.log(unk);
+dffStream._cursor += unk.sectionSize;
+
+unk = dffStream.readSectionHeader();
+console.log(unk);
+dffStream._cursor += unk.sectionSize;
+
+unk = dffStream.readSectionHeader();
+console.log(unk);
+
+console.log(dffStream.readSectionHeader());
+const startCursor = dffStream._cursor;
+dffStream.readGeometryData();
+console.log(dffStream._cursor - startCursor);
+/*dffStream._cursor += unk.sectionSize;
+
+unk = dffStream.readSectionHeader();
+console.log(unk);
+dffStream._cursor += unk.sectionSize;
+
+unk = dffStream.readSectionHeader();
+console.log(unk);
+dffStream._cursor += unk.sectionSize;
+
+unk = dffStream.readSectionHeader();
+console.log(unk);
+dffStream._cursor += unk.sectionSize;
+
+unk = dffStream.readSectionHeader();
+console.log(unk);
+dffStream._cursor += unk.sectionSize;
+
+unk = dffStream.readSectionHeader();
+console.log(unk);
+dffStream._cursor += unk.sectionSize;
+
+unk = dffStream.readSectionHeader();
+console.log(unk);
+dffStream._cursor += unk.sectionSize;*/
+
+//console.log(dffStream.readSectionHeader());
+//console.log(dffStream.readSectionHeader());
+
+//console.log(JSON.stringify(dffStream.readGeometryData()));
+/*console.log(dffStream._cursor);
+dffStream.readGeometryData();
+console.log(dffStream._cursor);
+console.log(dffStream.readSectionHeader());*/
+
+//console.log(dffStream.readGeometryListData());
+
+/*dffStream._cursor += 76;
+console.log(dffStream.readSectionHeader());
+dffStream._cursor += 76;
+console.log(dffStream.readSectionHeader());
+dffStream._cursor += 76;
+console.log(dffStream.readSectionHeader());
+dffStream._cursor += 40;
+console.log(dffStream.readSectionHeader());
+dffStream._cursor += 40;
+console.log(dffStream.readSectionHeader());
+dffStream._cursor += 8;
+console.log(dffStream.readSectionHeader());
+dffStream._cursor += 4;
+console.log(dffStream.readSectionHeader());
+dffStream._cursor += 76;
+console.log(dffStream.readSectionHeader());
+dffStream._cursor += 76;
+console.log(dffStream.readSectionHeader());
+dffStream._cursor += 76;
+console.log(dffStream.readSectionHeader());
+dffStream._cursor += 76;
+console.log(dffStream.readSectionHeader());
+dffStream._cursor += 76;
+console.log(dffStream.readSectionHeader());
+dffStream._cursor += 76;
+console.log(dffStream.readSectionHeader());
+dffStream._cursor += 76;
+console.log(dffStream.readSectionHeader());
+dffStream._cursor += 76;
+console.log(dffStream.readSectionHeader());
+dffStream._cursor += 76;
+console.log(dffStream.readSectionHeader());
+dffStream._cursor += 76;
+console.log(dffStream.readSectionHeader());
+console.log(dffStream.readSectionHeader());*/
+
+/* RwMaterialList
 console.log(dffStream.readSectionHeader());
 // + RwStruct
 console.log(dffStream.readSectionHeader());
@@ -113,4 +226,4 @@ console.log(dffStream.readSectionHeader()); // Empty
 console.log(dffStream.readSectionHeader());
 // ++ RwReflectionMaterial
 console.log(dffStream.readSectionHeader());
-dffStream._cursor += 24; // Skip for now
+dffStream._cursor += 24; // Skip for now*/

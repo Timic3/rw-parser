@@ -24,6 +24,21 @@ interface RwFrameListData {
     frames: Array<RwFrame>
 }
 
+interface RwGeometry {
+    colorInformation: number[][],
+    textureMappingInformation: number[][],
+    faceInformation: number[][],
+    boundingSphere: number[],
+    hasPosition: number, hasNormals: number,
+    vertexInformation: number[][],
+    normalInformation: number[][]
+}
+
+interface RwGeometryListData {
+    numberOfGeometricObjects: number,
+    geometryData: RwGeometry
+}
+
 export class RwFile extends ByteStream {
 
     constructor(stream: Buffer) {
@@ -73,11 +88,19 @@ export class RwFile extends ByteStream {
         return { numberOfFrames, frames }
     }
 
-    public readGeometryListData() {
+    public readGeometryListData(): RwGeometryListData {
         const numberOfGeometricObjects = this.readUint32();
         console.log(this.readSectionHeader());
         console.log(this.readSectionHeader());
 
+        const geometryData = this.readGeometryData();
+
+        return {
+            numberOfGeometricObjects, geometryData
+        };
+    }
+
+    public readGeometryData(): RwGeometry {
         const flags = this.readUint32();
         const triangleCount = this.readUint32();
         const vertexCount = this.readUint32();
@@ -90,12 +113,12 @@ export class RwFile extends ByteStream {
         const diffuse = this.readFloat();
         */
 
-       const colorInformation = [];
-       const textureMappingInformation = [];
-       const faceInformation = [];
+        const colorInformation = [];
+        const textureMappingInformation = [];
+        const faceInformation = [];
 
         if ((flags & 0x01000000) == 0) {
-            if (flags & 0x08) { // Vertex Prelit
+            if ((flags & 0x08) != 0) { // Vertex Prelit
                 for (let i = 0; i < vertexCount; i++) {
                     colorInformation[i] = [] as number[];
                     // R, G, B, A
@@ -106,8 +129,7 @@ export class RwFile extends ByteStream {
                 }
             }
 
-            // if (flags & (0x04 | 0x00000080)) { // Vertex Textured | Vertex Textured 2
-            if (flags & 0x04) { // Vertex Textured
+            if ((flags & (0x04 | 0x00000080)) != 0) { // Vertex Textured | Vertex Textured 2
                 for (let i = 0; i < vertexCount; i++) {
                     textureMappingInformation[i] = [] as number[];
                     // U, V
@@ -148,7 +170,7 @@ export class RwFile extends ByteStream {
         }
 
         const normalInformation = [];
-        if (flags & 0x10) { // Vertex Normals
+        if ((flags & 0x10) != 0) { // Vertex Normals
             for (let i = 0; i < vertexCount; i++) {
                 normalInformation[i] = [] as number[];
                 // X, Y, Z
@@ -158,8 +180,7 @@ export class RwFile extends ByteStream {
             }
         }
 
-        return [
-            numberOfGeometricObjects,
+        return {
             colorInformation,
             textureMappingInformation,
             faceInformation,
@@ -167,7 +188,7 @@ export class RwFile extends ByteStream {
             hasPosition, hasNormals,
             vertexInformation,
             normalInformation
-        ];
+        };
     }
 
     public readMaterialListData() {
