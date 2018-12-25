@@ -101,7 +101,8 @@ export class RwFile extends ByteStream {
     }
 
     public readGeometryData(): RwGeometry {
-        const flags = this.readUint32();
+        const flags = this.readUint16();
+        this._cursor += 2;
         const triangleCount = this.readUint32();
         const vertexCount = this.readUint32();
         const morphTargetCount = this.readUint32();
@@ -113,39 +114,52 @@ export class RwFile extends ByteStream {
         const diffuse = this.readFloat();
         */
 
+        console.log(flags);
+
+        const triangleStrip = flags & 0x01;
+        const includesVertex = flags & 0x02;
+        const includesUVs = flags & 0x04;
+        const includesColors = flags & 0x08;
+        const includesNormals = flags & 0x10;
+        const multipleUVSets = flags & 0x100;
+        console.log(triangleStrip);
+        console.log(includesVertex);
+        console.log(includesUVs);
+        console.log(includesColors);
+        console.log(includesNormals);
+        console.log(multipleUVSets);
+
         const colorInformation = [];
         const textureMappingInformation = [];
         const faceInformation = [];
 
-        if ((flags & 0x01000000) == 0) {
-            if ((flags & 0x08) != 0) { // Vertex Prelit
-                for (let i = 0; i < vertexCount; i++) {
-                    colorInformation[i] = [] as number[];
-                    // R, G, B, A
-                    colorInformation[i][0] = this.readUint8();
-                    colorInformation[i][1] = this.readUint8();
-                    colorInformation[i][2] = this.readUint8();
-                    colorInformation[i][3] = this.readUint8();
-                }
+        if ((flags & 0x08) != 0) { // Vertex Prelit
+            for (let i = 0; i < vertexCount; i++) {
+                colorInformation[i] = [] as number[];
+                // R, G, B, A
+                colorInformation[i][0] = this.readUint8();
+                colorInformation[i][1] = this.readUint8();
+                colorInformation[i][2] = this.readUint8();
+                colorInformation[i][3] = this.readUint8();
             }
+        }
 
-            if ((flags & (0x04 | 0x00000080)) != 0) { // Vertex Textured | Vertex Textured 2
-                for (let i = 0; i < vertexCount; i++) {
-                    textureMappingInformation[i] = [] as number[];
-                    // U, V
-                    textureMappingInformation[i][0] = this.readFloat();
-                    textureMappingInformation[i][1] = this.readFloat();
-                }
+        if ((flags & (0x04 | 0x00000080)) != 0) { // Vertex Textured | Vertex Textured 2
+            for (let i = 0; i < vertexCount; i++) {
+                textureMappingInformation[i] = [] as number[];
+                // U, V
+                textureMappingInformation[i][0] = this.readFloat();
+                textureMappingInformation[i][1] = this.readFloat();
             }
+        }
 
-            for (let i = 0; i < triangleCount; i++) {
-                faceInformation[i] = [] as number[];
-                // Vertex 2, Vertex 1, Material ID / Flags, Vertex 3
-                faceInformation[i][0] = this.readUint16();
-                faceInformation[i][1] = this.readUint16();
-                faceInformation[i][2] = this.readUint16();
-                faceInformation[i][3] = this.readUint16();
-            }
+        for (let i = 0; i < triangleCount; i++) {
+            faceInformation[i] = [] as number[];
+            // Vertex 2, Vertex 1, Material ID / Flags, Vertex 3
+            faceInformation[i][0] = this.readUint16();
+            faceInformation[i][1] = this.readUint16();
+            faceInformation[i][2] = this.readUint16();
+            faceInformation[i][3] = this.readUint16();
         }
 
         // TODO: Repeat according to morphTargetCount
