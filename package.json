@@ -15,5 +15,5 @@
     "build": "tsc"
   },
   "author": "Timic3",
-  "license": "UNLICENSED"
+  "license": "GPL-3.0"
 }
