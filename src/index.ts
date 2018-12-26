@@ -74,40 +74,43 @@ dffStream._cursor += unk.sectionSize;
 unk = dffStream.readSectionHeader();
 console.log(unk);
 
-console.log(dffStream.readSectionHeader());
+/*console.log(dffStream.readSectionHeader());
 const startCursor = dffStream._cursor;
-dffStream.readGeometryData();
+console.log(JSON.stringify(dffStream.readGeometryData()));
+console.log(dffStream._cursor - startCursor);*/
+dffStream._cursor += unk.sectionSize;
+
+unk = dffStream.readSectionHeader();
+console.log(unk);
+dffStream._cursor += unk.sectionSize;
+
+unk = dffStream.readSectionHeader();
+console.log(unk);
+dffStream._cursor += unk.sectionSize;
+
+unk = dffStream.readSectionHeader();
+console.log(unk);
+dffStream._cursor += unk.sectionSize;
+
+unk = dffStream.readSectionHeader();
+console.log(unk);
+dffStream._cursor += unk.sectionSize;
+
+unk = dffStream.readSectionHeader();
+console.log(unk);
+dffStream._cursor += unk.sectionSize;
+
+unk = dffStream.readSectionHeader();
+console.log(unk);
+dffStream._cursor += unk.sectionSize;
+
+console.log(dffStream.readSectionHeader());
+console.log(dffStream.readSectionHeader());
+
+const startCursor = dffStream._cursor;
+console.log(JSON.stringify(dffStream.readGeometryData()));
+//dffStream.readGeometryData();
 console.log(dffStream._cursor - startCursor);
-/*dffStream._cursor += unk.sectionSize;
-
-unk = dffStream.readSectionHeader();
-console.log(unk);
-dffStream._cursor += unk.sectionSize;
-
-unk = dffStream.readSectionHeader();
-console.log(unk);
-dffStream._cursor += unk.sectionSize;
-
-unk = dffStream.readSectionHeader();
-console.log(unk);
-dffStream._cursor += unk.sectionSize;
-
-unk = dffStream.readSectionHeader();
-console.log(unk);
-dffStream._cursor += unk.sectionSize;
-
-unk = dffStream.readSectionHeader();
-console.log(unk);
-dffStream._cursor += unk.sectionSize;
-
-unk = dffStream.readSectionHeader();
-console.log(unk);
-dffStream._cursor += unk.sectionSize;*/
-
-//console.log(dffStream.readSectionHeader());
-//console.log(dffStream.readSectionHeader());
-
-//console.log(JSON.stringify(dffStream.readGeometryData()));
 /*console.log(dffStream._cursor);
 dffStream.readGeometryData();
 console.log(dffStream._cursor);
