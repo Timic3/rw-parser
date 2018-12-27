@@ -36,7 +36,7 @@ interface RwGeometry {
 
 interface RwGeometryListData {
     numberOfGeometricObjects: number,
-    geometryData: RwGeometry
+    geometries: Array<RwGeometry>
 }
 
 export class RwFile extends ByteStream {
@@ -89,15 +89,26 @@ export class RwFile extends ByteStream {
     }
 
     public readGeometryListData(): RwGeometryListData {
+        console.log(this.readSectionHeader());
+        console.log(this.readSectionHeader());
         const numberOfGeometricObjects = this.readUint32();
-        console.log(this.readSectionHeader());
-        console.log(this.readSectionHeader());
 
-        const geometryData = this.readGeometryData();
+        let geometries = Array<RwGeometry>();
 
-        return {
-            numberOfGeometricObjects, geometryData
-        };
+        for (let i = 0; i < numberOfGeometricObjects; i++) {
+            console.log(this.readSectionHeader());
+            console.log(this.readSectionHeader());
+            const geometryData = this.readGeometryData();
+            geometries.push(geometryData);
+
+            // TODO: Material data
+            const a = this.readSectionHeader();
+            this._cursor += a.sectionSize;
+            const b = this.readSectionHeader();
+            this._cursor += b.sectionSize;
+        }
+
+        return { numberOfGeometricObjects, geometries }
     }
 
     public readGeometryData(): RwGeometry {
@@ -243,5 +254,12 @@ export class RwFile extends ByteStream {
         // Unknown - not used
         this._cursor += 2;
         return textureFilterFlags;
+    }
+
+    public readAtomic() {
+        const frame = this.readUint32();
+        const geometry = this.readUint32();
+        this._cursor += 8;
+        return [ frame, geometry ];
     }
 }

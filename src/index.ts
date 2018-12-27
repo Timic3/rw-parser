@@ -30,6 +30,9 @@ for (let i = 0; i < frameListData.numberOfFrames; i++) {
     console.log(node);
     console.log(dffStream.readString(node.sectionSize));
 }
+
+dffStream.readGeometryListData();
+
 /*
 // RwGeometryList
 console.log(dffStream.readSectionHeader());
@@ -39,7 +42,7 @@ console.log(dffStream.readSectionHeader());
 */
 
 // Tyre
-const geoList = dffStream.readSectionHeader();
+/*const geoList = dffStream.readSectionHeader();
 console.log(geoList);
 console.log(dffStream.readSectionHeader());
 console.log(dffStream.readUint32());
@@ -74,10 +77,10 @@ dffStream._cursor += unk.sectionSize;
 unk = dffStream.readSectionHeader();
 console.log(unk);
 
-/*console.log(dffStream.readSectionHeader());
+console.log(dffStream.readSectionHeader());
 const startCursor = dffStream._cursor;
 console.log(JSON.stringify(dffStream.readGeometryData()));
-console.log(dffStream._cursor - startCursor);*/
+console.log(dffStream._cursor - startCursor);
 dffStream._cursor += unk.sectionSize;
 
 unk = dffStream.readSectionHeader();
@@ -110,7 +113,7 @@ console.log(dffStream.readSectionHeader());
 const startCursor = dffStream._cursor;
 console.log(JSON.stringify(dffStream.readGeometryData()));
 //dffStream.readGeometryData();
-console.log(dffStream._cursor - startCursor);
+console.log(dffStream._cursor - startCursor);*/
 /*console.log(dffStream._cursor);
 dffStream.readGeometryData();
 console.log(dffStream._cursor);
