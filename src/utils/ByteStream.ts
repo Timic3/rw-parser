@@ -24,6 +24,12 @@ export class ByteStream {
         this._cursor += 4;
         return uint32;
     }
+    
+    public readInt32() {
+        const int32 = this._stream.readInt32LE(this._cursor);
+        this._cursor += 4;
+        return int32;
+    }
 
     public readFloat() {
         const float = this._stream.readFloatLE(this._cursor);

@@ -39,6 +39,11 @@ interface RwGeometryListData {
     geometries: Array<RwGeometry>
 }
 
+interface RwAtomic {
+    frameIndex: number,
+    geometryIndex: number
+}
+
 export class RwFile extends ByteStream {
 
     constructor(stream: Buffer) {
@@ -77,7 +82,7 @@ export class RwFile extends ByteStream {
                 coordinatesOffset[i] = this.readFloat();
             }
             
-            const parentFrame = this.readUint32();
+            const parentFrame = this.readInt32();
 
             // Skip 4 bytes - not used
             this._cursor += 4;
@@ -89,8 +94,6 @@ export class RwFile extends ByteStream {
     }
 
     public readGeometryListData(): RwGeometryListData {
-        console.log(this.readSectionHeader());
-        console.log(this.readSectionHeader());
         const numberOfGeometricObjects = this.readUint32();
 
         let geometries = Array<RwGeometry>();
@@ -256,10 +259,11 @@ export class RwFile extends ByteStream {
         return textureFilterFlags;
     }
 
-    public readAtomic() {
-        const frame = this.readUint32();
-        const geometry = this.readUint32();
+    public readAtomic(): RwAtomic {
+        const frameIndex = this.readUint32();
+        const geometryIndex = this.readUint32();
+        // Skip unused bytes
         this._cursor += 8;
-        return [ frame, geometry ];
+        return { frameIndex, geometryIndex };
     }
 }

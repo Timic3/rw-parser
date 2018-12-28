@@ -19,7 +19,7 @@ console.log(dffStream.readSectionHeader());
 console.log(dffStream.readSectionHeader());
 // ++ Data
 const frameListData = dffStream.readFrameListData();
-console.log(frameListData);
+console.log(JSON.stringify(frameListData));
 
 // Components presumably
 for (let i = 0; i < frameListData.numberOfFrames; i++) {
@@ -31,7 +31,29 @@ for (let i = 0; i < frameListData.numberOfFrames; i++) {
     console.log(dffStream.readString(node.sectionSize));
 }
 
+console.log(dffStream.readSectionHeader());
+console.log(dffStream.readSectionHeader());
 dffStream.readGeometryListData();
+
+const atomics = [];
+for (let i = 0; i < 15; i++) {
+    dffStream.readSectionHeader();
+    dffStream.readSectionHeader();
+    const atomic = dffStream.readAtomic();
+    atomics[atomic.geometryIndex] = atomic.frameIndex;
+    
+    const unk = dffStream.readSectionHeader();
+    dffStream._cursor += unk.sectionSize;
+}
+
+console.log(JSON.stringify(atomics));
+
+//console.log(dffStream.readSectionHeader());
+//console.log(dffStream.readSectionHeader());
+
+let unk = dffStream.readSectionHeader();
+dffStream._cursor += unk.sectionSize;
+// End
 
 /*
 // RwGeometryList
