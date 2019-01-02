@@ -42,4 +42,8 @@ export class ByteStream {
         this._cursor += size;
         return string;
     }
+
+    public skip(size: number) {
+        this._cursor += size;
+    }
 }

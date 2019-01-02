@@ -9,7 +9,7 @@ interface RwSectionHeader {
     versionNumber: number
 }
 
-interface RwClumpData {
+interface RwClump {
     objectCount: number
 }
 
@@ -19,7 +19,7 @@ interface RwFrame {
     parentFrame: number
 }
 
-interface RwFrameListData {
+interface RwFrameList {
     numberOfFrames: number,
     frames: Array<RwFrame>
 }
@@ -34,7 +34,7 @@ interface RwGeometry {
     normalInformation: number[][]
 }
 
-interface RwGeometryListData {
+interface RwGeometryList {
     numberOfGeometricObjects: number,
     geometries: Array<RwGeometry>
 }
@@ -57,7 +57,8 @@ export class RwFile extends ByteStream {
         return { sectionType, sectionSize, versionNumber }
     }
 
-    public readClumpData(): RwClumpData {
+    public readClump(): RwClump {
+        this.readSectionHeader();
         const objectCount = this.readUint32();
 
         // Let's assume the following 8 bytes are paddings
@@ -65,7 +66,8 @@ export class RwFile extends ByteStream {
         return { objectCount }
     }
 
-    public readFrameListData(): RwFrameListData {
+    public readFrameList(): RwFrameList {
+        this.readSectionHeader();
         const numberOfFrames = this.readUint32();
 
         let frames = Array<RwFrame>();
@@ -93,15 +95,16 @@ export class RwFile extends ByteStream {
         return { numberOfFrames, frames }
     }
 
-    public readGeometryListData(): RwGeometryListData {
+    public readGeometryList(): RwGeometryList {
+        this.readSectionHeader();
         const numberOfGeometricObjects = this.readUint32();
 
         let geometries = Array<RwGeometry>();
 
         for (let i = 0; i < numberOfGeometricObjects; i++) {
-            console.log(this.readSectionHeader());
-            console.log(this.readSectionHeader());
-            const geometryData = this.readGeometryData();
+            this.readSectionHeader();
+            this.readSectionHeader();
+            const geometryData = this.readGeometry();
             geometries.push(geometryData);
 
             // TODO: Material data
@@ -114,7 +117,7 @@ export class RwFile extends ByteStream {
         return { numberOfGeometricObjects, geometries }
     }
 
-    public readGeometryData(): RwGeometry {
+    public readGeometry(): RwGeometry {
         const flags = this.readUint16();
         const textureCoordinatesCount = this.readUint8();
         const nativeGeometryFlags = this.readUint8();
@@ -215,23 +218,23 @@ export class RwFile extends ByteStream {
         };
     }
 
-    public readMaterialListData() {
+    public readMaterialList() {
         const materialInstanceCount = this.readUint32();
         for (let i = 0; i < materialInstanceCount; i++) {
             // TODO: Store material instances accordingly
-            this._cursor += 4;
+            this.skip(4);
         }
         console.log(this.readSectionHeader());
         console.log(this.readSectionHeader());
 
-        const materialData = this.readMaterialData();
+        const materialData = this.readMaterial();
 
         return [materialInstanceCount, materialData];
     }
 
-    public readMaterialData() {
+    public readMaterial() {
         // Flags - not used
-        this._cursor += 4;
+        this.skip(4);
 
         const color = [];
         color[0] = this.readUint8();
@@ -240,7 +243,7 @@ export class RwFile extends ByteStream {
         color[3] = this.readUint8();
 
         // Unknown - not used
-        this._cursor += 4;
+        this.skip(4);
 
         const isTextured = this.readUint32();
 
@@ -252,18 +255,19 @@ export class RwFile extends ByteStream {
         return [color, isTextured, ambient, specular, diffuse];
     }
 
-    public readTextureData() {
+    public readTexture() {
         const textureFilterFlags = this.readUint16();
         // Unknown - not used
-        this._cursor += 2;
+        this.skip(2);
         return textureFilterFlags;
     }
 
     public readAtomic(): RwAtomic {
+        this.readSectionHeader();
         const frameIndex = this.readUint32();
         const geometryIndex = this.readUint32();
         // Skip unused bytes
-        this._cursor += 8;
+        this.skip(8);
         return { frameIndex, geometryIndex };
     }
 }
