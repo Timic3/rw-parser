@@ -3,28 +3,28 @@ import { ByteStream } from "../utils/ByteStream";
 
 // To be moved
 
-interface RwSectionHeader {
+export interface RwSectionHeader {
     sectionType: number,
     sectionSize: number,
     versionNumber: number
 }
 
-interface RwClump {
+export interface RwClump {
     objectCount: number
 }
 
-interface RwFrame {
+export interface RwFrame {
     rotationMatrix: number[],
     coordinatesOffset: number[],
     parentFrame: number
 }
 
-interface RwFrameList {
+export interface RwFrameList {
     numberOfFrames: number,
     frames: Array<RwFrame>
 }
 
-interface RwGeometry {
+export interface RwGeometry {
     colorInformation: number[][],
     textureMappingInformation: number[][],
     faceInformation: number[][],
@@ -34,12 +34,12 @@ interface RwGeometry {
     normalInformation: number[][]
 }
 
-interface RwGeometryList {
+export interface RwGeometryList {
     numberOfGeometricObjects: number,
     geometries: Array<RwGeometry>
 }
 
-interface RwAtomic {
+export interface RwAtomic {
     frameIndex: number,
     geometryIndex: number
 }
@@ -83,7 +83,7 @@ export class RwFile extends ByteStream {
             for (let i = 0; i < 3; i++) {
                 coordinatesOffset[i] = this.readFloat();
             }
-            
+
             const parentFrame = this.readInt32();
 
             // Skip 4 bytes - not used
@@ -91,7 +91,7 @@ export class RwFile extends ByteStream {
 
             frames.push({ rotationMatrix, coordinatesOffset, parentFrame });
         }
-        
+
         return { numberOfFrames, frames }
     }
 

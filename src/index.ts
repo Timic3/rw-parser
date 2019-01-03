@@ -21,6 +21,10 @@ while (dffStream._cursor < buffer.byteLength) {
         break;
     }
 
+    if (header.sectionSize == 0) {
+        continue;
+    }
+
     switch (header.sectionType) {
         case RwSections.RwClump:
             break;
@@ -50,7 +54,11 @@ while (dffStream._cursor < buffer.byteLength) {
     }
 }
 
-console.log(JSON.stringify(dummies));
-console.log(JSON.stringify(atomics));
-console.log(JSON.stringify(frameList));
-console.log(JSON.stringify(geometryList));
+if (!fs.existsSync("output")) {
+    fs.mkdirSync("output");
+}
+
+fs.writeFile('output/dummies.json', JSON.stringify(dummies), function(error) { if (error != null) { console.log(error); } });
+fs.writeFile('output/atomics.json', JSON.stringify(atomics), function(error) { if (error != null) { console.log(error); } });
+fs.writeFile('output/frameList.json', JSON.stringify(frameList), function(error) { if (error != null) { console.log(error); } });
+fs.writeFile('output/geometryList.json', JSON.stringify(geometryList), function(error) { if (error != null) { console.log(error); } });
