@@ -1,5 +1,6 @@
 
 import { ByteStream } from "../utils/ByteStream";
+import { RwSections } from './RwSections';
 
 // To be moved
 
@@ -24,6 +25,25 @@ export interface RwFrameList {
     frames: Array<RwFrame>
 }
 
+export interface RwTexture {
+    textureFilterFlags: number,
+    textureName: string
+}
+
+export interface RwMaterial {
+    color: number[],
+    isTextured: number,
+    ambient: number,
+    specular: number,
+    diffuse: number,
+    texture: any
+}
+
+export interface RwMaterialList {
+    materialInstanceCount: number,
+    materialData: Array<RwMaterial>
+}
+
 export interface RwGeometry {
     colorInformation: number[][],
     textureMappingInformation: number[][],
@@ -31,7 +51,8 @@ export interface RwGeometry {
     boundingSphere: number[],
     hasPosition: number, hasNormals: number,
     vertexInformation: number[][],
-    normalInformation: number[][]
+    normalInformation: number[][],
+    materialList: RwMaterialList
 }
 
 export interface RwGeometryList {
@@ -54,6 +75,7 @@ export class RwFile extends ByteStream {
         const sectionType = this.readUint32();
         const sectionSize = this.readUint32();
         const versionNumber = this.readUint32();
+
         return { sectionType, sectionSize, versionNumber }
     }
 
@@ -106,12 +128,6 @@ export class RwFile extends ByteStream {
             this.readSectionHeader();
             const geometryData = this.readGeometry();
             geometries.push(geometryData);
-
-            // TODO: Material data
-            const a = this.readSectionHeader();
-            this._cursor += a.sectionSize;
-            const b = this.readSectionHeader();
-            this._cursor += b.sectionSize;
         }
 
         return { numberOfGeometricObjects, geometries }
@@ -207,6 +223,11 @@ export class RwFile extends ByteStream {
             }
         }
 
+        let materialList = this.readMaterialList();
+
+        // Skipping extension for now
+        this.skip(this.readSectionHeader().sectionSize);
+
         return {
             colorInformation,
             textureMappingInformation,
@@ -214,25 +235,42 @@ export class RwFile extends ByteStream {
             boundingSphere,
             hasPosition, hasNormals,
             vertexInformation,
-            normalInformation
+            normalInformation,
+            materialList
         };
     }
 
-    public readMaterialList() {
+    public readMaterialList() : RwMaterialList {
+        this.readSectionHeader();
+        this.readSectionHeader();
         const materialInstanceCount = this.readUint32();
+
+        const materialIndexes = Array<number>();
+
         for (let i = 0; i < materialInstanceCount; i++) {
-            // TODO: Store material instances accordingly
-            this.skip(4);
+            const materialIndex = this.readInt32();
+            materialIndexes.push(materialIndex);
         }
-        console.log(this.readSectionHeader());
-        console.log(this.readSectionHeader());
 
-        const materialData = this.readMaterial();
+        const materialData = Array<RwMaterial>();
 
-        return [materialInstanceCount, materialData];
+        for (let i = 0; i < materialInstanceCount; i++) {
+            let materialIndex = materialIndexes[i];
+
+            if (materialIndex == -1) {
+                materialData.push(this.readMaterial());
+            } else {
+                materialData.push(materialData[materialIndex]);
+            }
+        }
+
+        return { materialInstanceCount, materialData };
     }
 
-    public readMaterial() {
+    public readMaterial() : RwMaterial {
+        this.readSectionHeader();
+        this.readSectionHeader();
+
         // Flags - not used
         this.skip(4);
 
@@ -252,14 +290,35 @@ export class RwFile extends ByteStream {
         const specular = this.readFloat();
         const diffuse = this.readFloat();
 
-        return [color, isTextured, ambient, specular, diffuse];
+        let texture = null;
+
+        if (isTextured > 0) {
+            texture = this.readTexture();
+        }
+
+        // Skipping extension for now
+        this.skip(this.readSectionHeader().sectionSize);
+
+        return { color, isTextured, ambient, specular, diffuse, texture };
     }
 
-    public readTexture() {
-        const textureFilterFlags = this.readUint16();
+    public readTexture() : RwTexture {
+        this.readSectionHeader();
+        this.readSectionHeader();
+
+        const textureFilterFlags:number = this.readUint16();
         // Unknown - not used
         this.skip(2);
-        return textureFilterFlags;
+
+        let nameSize = this.readSectionHeader().sectionSize;
+        const textureName:string = this.readString(nameSize);
+
+        this.skip(this.readSectionHeader().sectionSize);
+
+        // Skipping extension for now
+        this.skip(this.readSectionHeader().sectionSize);
+
+        return { textureFilterFlags, textureName };
     }
 
     public readAtomic(): RwAtomic {

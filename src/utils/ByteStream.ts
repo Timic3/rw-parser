@@ -24,7 +24,7 @@ export class ByteStream {
         this._cursor += 4;
         return uint32;
     }
-    
+
     public readInt32() {
         const int32 = this._stream.readInt32LE(this._cursor);
         this._cursor += 4;
@@ -40,7 +40,16 @@ export class ByteStream {
     public readString(size: number) {
         const string = this._stream.toString('ascii', this._cursor, this._cursor + size);
         this._cursor += size;
-        return string;
+
+        return string.replace(/\0/g, '');
+    }
+
+    public getPosition() {
+        return this._cursor;
+    }
+
+    public setPosition(position: number) {
+        this._cursor = position;
     }
 
     public skip(size: number) {
