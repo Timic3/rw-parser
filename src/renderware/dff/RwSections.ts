@@ -1,4 +1,3 @@
-
 export enum RwSections {
     RwStruct = 0x0001,
     RwString = 0x0002,
