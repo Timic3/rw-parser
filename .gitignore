@@ -4,5 +4,9 @@ output
 
 assets/*
 !assets/infernus.dff
+!assets/infernus.txd
 !assets/infernus2.dff
 !assets/bullet.dff
+!assets/bullet.txd
+!assets/copcarla.dff
+!assets/copcarla.txd

@@ -9,6 +9,8 @@ export enum RwSections {
     RwGeometry = 0x000F,
     RwClump = 0x0010,
     RwAtomic = 0x0014,
+    RwTextureNative = 0x0015,
+    RwTextureDictionary = 0x0016,
     RwGeometryList = 0x001A,
     RwMaterialEffectsPLG = 0x0120,
     RwReflectionMaterial = 0x0253F2FC,

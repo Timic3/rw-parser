@@ -1,6 +1,6 @@
 import fs = require('fs');
 import { RwFile, RwGeometryList, RwFrameList } from './RwFile';
-import { RwSections } from './RwSections';
+import { RwSections } from '../RwSections';
 
 export class DffParser {
     path: string = '';

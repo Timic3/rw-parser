@@ -1,6 +1,6 @@
 
 import { ByteStream } from "../../utils/ByteStream";
-import { RwSections } from './RwSections';
+import { RwSections } from '../RwSections';
 
 // To be moved
 
