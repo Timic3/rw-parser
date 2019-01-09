@@ -6,7 +6,8 @@
   "types": "dist/index.d.ts",
   "private": true,
   "dependencies": {
-    "dxt-js": "0.0.3"
+    "dxt-js": "0.0.3",
+    "jimp": "^0.6.0"
   },
   "devDependencies": {
     "@types/node": "^10.12.18",

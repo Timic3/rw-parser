@@ -1,4 +1,5 @@
 
+const Jimp = require('jimp');
 const dxt = require('dxt-js');
 const fs = require('fs');
 import { ByteStream } from "../../utils/ByteStream";
@@ -60,11 +61,9 @@ export class RwFile extends ByteStream {
 
         let textureNatives = Array<RwTextureNative>();
 
-        for (let i = 0; i < 1; i++) {
+        for (let i = 0; i < textureCount; i++) {
             let textureNative = this.readTextureNative();
             textureNatives.push(textureNative);
-
-            console.log(textureNative);
         }
 
         // Skip unused extension
@@ -114,15 +113,31 @@ export class RwFile extends ByteStream {
             mipHeight /= 2;
 
             const rasterSize = this.readUint32();
-
-            console.log(rasterSize);
-            console.log(mipWidth);
-            console.log('+++');
-
             const raster = this.read(rasterSize);
 
             // Raw RGBA presentation
             const raw = dxt.decompress(raster, width, height, dxt.flags.DXT1);
+            let pixels: number[][] = [];
+            for (let i = 0; i < raw.length; i += 4) {
+                const chunk = raw.slice(i, i + 4);
+                pixels.push(chunk);
+            }
+            
+            new Jimp(width, height, (_, image) => {
+                let i = 0;
+                for (let x = 0; x < width; x++) {
+                    for (let y = 0; y < height; y++) {
+                        const hex = Jimp.rgbaToInt(pixels[i][0], pixels[i][1], pixels[i][2], pixels[i][3]);
+                        i++;
+                        image.setPixelColor(hex, x, y);
+                    }
+                }
+              
+                image.write('output/' + textureName + '.png');
+            });
+
+            // Skip extension
+            this.skip(this.readSectionHeader().sectionSize);
         }
 
         return { platformId, filterMode, uAddressing, vAddressing, textureName, maskName, rasterFormat,

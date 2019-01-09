@@ -45,7 +45,6 @@ export class ByteStream {
     }
 
     public read(size: number) {
-        console.log(size);
         let data = new Uint8Array(size);
         for (let i = 0; i < size; i++) {
             data[i] = this.readUint8();
