@@ -1,4 +1,6 @@
 
+const dxt = require('dxt-js');
+const fs = require('fs');
 import { ByteStream } from "../../utils/ByteStream";
 import { RwSections } from '../RwSections';
 
@@ -94,6 +96,9 @@ export class RwFile extends ByteStream {
         const mipmapCount = this.readUint8();
         const rasterType = this.readUint8();
 
+        const isPAL4 = rasterType & 0x4000;
+        const isPAL8 = rasterType & 0x2000;
+
         const compressionFlags = this.readUint8();
 
         const alpha = (compressionFlags & (1 << 0)) !== 0;
@@ -113,6 +118,11 @@ export class RwFile extends ByteStream {
             console.log(rasterSize);
             console.log(mipWidth);
             console.log('+++');
+
+            const raster = this.read(rasterSize);
+
+            // Raw RGBA presentation
+            const raw = dxt.decompress(raster, width, height, dxt.flags.DXT1);
         }
 
         return { platformId, filterMode, uAddressing, vAddressing, textureName, maskName, rasterFormat,

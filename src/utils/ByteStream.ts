@@ -44,6 +44,15 @@ export class ByteStream {
         return string.replace(/\0/g, '');
     }
 
+    public read(size: number) {
+        console.log(size);
+        let data = new Uint8Array(size);
+        for (let i = 0; i < size; i++) {
+            data[i] = this.readUint8();
+        }
+        return data
+    }
+
     public getPosition() {
         return this._cursor;
     }

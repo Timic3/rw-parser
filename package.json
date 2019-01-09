@@ -5,7 +5,9 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "private": true,
-  "dependencies": {},
+  "dependencies": {
+    "dxt-js": "0.0.3"
+  },
   "devDependencies": {
     "@types/node": "^10.12.18",
     "typescript": "^3.2.2"
@@ -13,6 +15,6 @@
   "scripts": {
     "build": "tsc"
   },
-  "author": "Timic3",
+  "author": "Timic3 & Megadreams",
   "license": "GPL-3.0"
 }

@@ -5,7 +5,7 @@ import { TxdParser } from './renderware/txd/TxdParser';
 let dff = new DffParser('./assets/copcarla.dff').parse();
 let txd = new TxdParser('./assets/copcarla.txd').parse();
 
-console.log(txd);
+//console.log(txd);
 
 let output = JSON.stringify(dff);
 
