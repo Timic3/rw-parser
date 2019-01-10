@@ -122,17 +122,17 @@ export class RwFile extends ByteStream {
                 const chunk = raw.slice(i, i + 4);
                 pixels.push(chunk);
             }
-            
-            new Jimp(width, height, (_, image) => {
+
+            new Jimp(width, height, (_ : any, image : any) => {
                 let i = 0;
-                for (let x = 0; x < width; x++) {
-                    for (let y = 0; y < height; y++) {
+                for (let x = 0; x < height; x++) {
+                    for (let y = 0; y < width; y++) {
                         const hex = Jimp.rgbaToInt(pixels[i][0], pixels[i][1], pixels[i][2], pixels[i][3]);
                         i++;
-                        image.setPixelColor(hex, x, y);
+                        image.setPixelColor(hex, y, x);
                     }
                 }
-              
+
                 image.write('output/' + textureName + '.png');
             });
 
