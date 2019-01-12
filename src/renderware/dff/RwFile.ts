@@ -26,7 +26,10 @@ export interface RwFrameList {
 }
 
 export interface RwTexture {
-    textureFilterFlags: number,
+    textureFiltering: number,
+    uAddressing: number,
+    vAddressing: number,
+    usesMipLevels: boolean,
     textureName: string
 }
 
@@ -52,7 +55,8 @@ export interface RwGeometry {
     hasPosition: number, hasNormals: number,
     vertexInformation: number[][],
     normalInformation: number[][],
-    materialList: RwMaterialList
+    materialList: RwMaterialList,
+    binMesh: any
 }
 
 export interface RwGeometryList {
@@ -63,6 +67,17 @@ export interface RwGeometryList {
 export interface RwAtomic {
     frameIndex: number,
     geometryIndex: number
+}
+
+export interface RwBinMesh {
+    meshCount: number,
+    meshes: Array<RwMesh>
+}
+
+export interface RwMesh {
+    materialIndex: number,
+    indiceCount: number,
+    indices: Array<number>
 }
 
 export class RwFile extends ByteStream {
@@ -225,7 +240,9 @@ export class RwFile extends ByteStream {
 
         let materialList = this.readMaterialList();
 
-        // Skipping extension for now
+        this.readSectionHeader().sectionSize;
+        let binMesh = this.readBinMesh();
+
         this.skip(this.readSectionHeader().sectionSize);
 
         return {
@@ -236,7 +253,42 @@ export class RwFile extends ByteStream {
             hasPosition, hasNormals,
             vertexInformation,
             normalInformation,
-            materialList
+            materialList,
+            binMesh
+        };
+    }
+
+    public readBinMesh() : RwBinMesh {
+        this.readSectionHeader();
+        this.skip(4);
+
+        const meshCount = this.readUint32();
+
+        this.skip(4);
+
+        const meshes = Array<RwMesh>();
+
+        for (let i = 0; i < meshCount; i++) {
+            meshes.push(this.readMesh());
+        }
+
+        return {
+            meshCount, meshes
+        };
+    }
+
+    public readMesh() : RwMesh {
+        const indiceCount = this.readUint32();
+        const materialIndex = this.readUint32();
+
+        const indices = Array<number>();
+
+        for (let i = 0; i < indiceCount; i++) {
+            indices.push(this.readUint32());
+        }
+
+        return {
+            indiceCount, materialIndex, indices
         };
     }
 
@@ -307,6 +359,12 @@ export class RwFile extends ByteStream {
         this.readSectionHeader();
 
         const textureFilterFlags:number = this.readUint16();
+
+        const textureFiltering = (textureFilterFlags & 0xFF000000) >> 24;
+        const uAddressing = (textureFilterFlags & 0xF000000) >> 20;
+        const vAddressing = (textureFilterFlags & 0xF0000) >> 16;
+        const usesMipLevels = (textureFilterFlags & (1 << 15)) !== 0;
+
         // Unknown - not used
         this.skip(2);
 
@@ -318,7 +376,7 @@ export class RwFile extends ByteStream {
         // Skipping extension for now
         this.skip(this.readSectionHeader().sectionSize);
 
-        return { textureFilterFlags, textureName };
+        return { textureFiltering, uAddressing, vAddressing, usesMipLevels, textureName };
     }
 
     public readAtomic(): RwAtomic {

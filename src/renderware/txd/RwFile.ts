@@ -35,7 +35,8 @@ export interface RwTextureNative {
     alpha: boolean,
     cubeTexture: boolean,
     autoMipMaps: boolean,
-    compressed: boolean
+    compressed: boolean,
+    mipmaps: Array<any>
 }
 
 export class RwFile extends ByteStream {
@@ -108,39 +109,51 @@ export class RwFile extends ByteStream {
         let mipWidth = width;
         let mipHeight = height;
 
+        var mipmaps = Array<any>();
+
         for (let i = 0; i < mipmapCount; i++) {
-            mipWidth /= 2;
-            mipHeight /= 2;
 
             const rasterSize = this.readUint32();
             const raster = this.read(rasterSize);
 
-            // Raw RGBA presentation
-            const raw = dxt.decompress(raster, width, height, dxt.flags.DXT1);
-            let pixels: number[][] = [];
-            for (let i = 0; i < raw.length; i += 4) {
-                const chunk = raw.slice(i, i + 4);
-                pixels.push(chunk);
-            }
+            if (i == 0) {
+                // Raw RGBA presentation
+                var raw:any;
 
-            new Jimp(width, height, (_ : any, image : any) => {
+                if (compressed) {
+                    raw = dxt.decompress(raster, mipWidth, mipHeight, dxt.flags.DXT1);
+                } else {
+                    raw = Array.from(raster);
+                }
+
+                let pixels: number[][] = [];
+                for (let i = 0; i < raw.length; i += 4) {
+                    const chunk = raw.slice(i, i + 4);
+                    pixels.push(chunk);
+                }
+
+                let jimp = new Jimp(mipWidth, mipHeight, (_ : any, image : any) => {});
+
                 let i = 0;
-                for (let x = 0; x < height; x++) {
-                    for (let y = 0; y < width; y++) {
-                        const hex = Jimp.rgbaToInt(pixels[i][0], pixels[i][1], pixels[i][2], pixels[i][3]);
+                for (let x = 0; x < mipHeight; x++) {
+                    for (let y = 0; y < mipWidth; y++) {
+                        const hex = Jimp.rgbaToInt(pixels[i][0] || 255, pixels[i][1] || 255, pixels[i][2] || 255, pixels[i][3] || 255);
                         i++;
-                        image.setPixelColor(hex, y, x);
+                        jimp.setPixelColor(hex, y, x);
                     }
                 }
 
-                image.write('output/' + textureName + '.png');
-            });
+                mipmaps.push([...jimp.bitmap.data]);
+            }
 
-            // Skip extension
-            this.skip(this.readSectionHeader().sectionSize);
+            mipWidth /= 2;
+            mipHeight /= 2;
         }
 
+        // Skip extension
+        this.skip(this.readSectionHeader().sectionSize);
+
         return { platformId, filterMode, uAddressing, vAddressing, textureName, maskName, rasterFormat,
-            d3dFormat, width, height, depth, mipmapCount, rasterType, alpha, cubeTexture, autoMipMaps, compressed };
+            d3dFormat, width, height, depth, mipmapCount, rasterType, alpha, cubeTexture, autoMipMaps, compressed, mipmaps };
     }
 }

@@ -7,7 +7,7 @@ let txd = new TxdParser('./assets/copcarla.txd').parse();
 
 //console.log(txd);
 
-let output = JSON.stringify(dff);
+let output = JSON.stringify({model: dff, textures: txd});
 
 if (!fs.existsSync("output")) {
     fs.mkdirSync("output");
