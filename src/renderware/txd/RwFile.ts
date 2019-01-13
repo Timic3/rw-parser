@@ -80,9 +80,9 @@ export class RwFile extends ByteStream {
         const platformId = this.readUint32();
         const flags = this.readUint32();
 
-        const filterMode = (flags & 0xFF000000) >> 24;
-        const uAddressing = (flags & 0xF000000) >> 20;
-        const vAddressing = (flags & 0xF0000) >> 16;
+        const filterMode = (flags & 0xFF);
+        const uAddressing = (flags & 0xF00) >> 8;
+        const vAddressing = (flags & 0xF000) >> 12;
 
         const textureName = this.readString(32);
         const maskName = this.readString(32);
@@ -120,13 +120,14 @@ export class RwFile extends ByteStream {
                 // Raw RGBA presentation
                 var raw:any;
 
-                if (compressed) {
-                    raw = dxt.decompress(raster, mipWidth, mipHeight, dxt.flags.DXT1);
+                if (compressed || d3dFormat.includes('DXT')) {
+                    raw = dxt.decompress(raster, mipWidth, mipHeight, dxt.flags[d3dFormat]);
                 } else {
                     raw = Array.from(raster);
                 }
 
                 let pixels: number[][] = [];
+
                 for (let i = 0; i < raw.length; i += 4) {
                     const chunk = raw.slice(i, i + 4);
                     pixels.push(chunk);
@@ -137,7 +138,7 @@ export class RwFile extends ByteStream {
                 let i = 0;
                 for (let x = 0; x < mipHeight; x++) {
                     for (let y = 0; y < mipWidth; y++) {
-                        const hex = Jimp.rgbaToInt(pixels[i][0] || 255, pixels[i][1] || 255, pixels[i][2] || 255, pixels[i][3] || 255);
+                        const hex = Jimp.rgbaToInt(pixels[i][0], pixels[i][1], pixels[i][2], pixels[i][3]);
                         i++;
                         jimp.setPixelColor(hex, y, x);
                     }

@@ -49,6 +49,7 @@ export interface RwMaterialList {
 
 export interface RwGeometry {
     colorInformation: number[][],
+    textureCoordinatesCount: number,
     textureMappingInformation: number[][],
     faceInformation: number[][],
     boundingSphere: number[],
@@ -188,11 +189,11 @@ export class RwFile extends ByteStream {
 
         if (includesUVs || multipleUVSets) { // Vertex Textured | Vertex Textured 2
             for (let i = 0; i < textureCoordinatesCount; i++) {
-                for (let i = 0; i < vertexCount; i++) {
-                    textureMappingInformation[i] = [] as number[];
+                for (let a = 0; a < vertexCount; a++) {
+                    textureMappingInformation[(i * vertexCount) + a] = [] as number[];
                     // U, V
-                    textureMappingInformation[i][0] = this.readFloat();
-                    textureMappingInformation[i][1] = this.readFloat();
+                    textureMappingInformation[(i * vertexCount) + a][0] = this.readFloat();
+                    textureMappingInformation[(i * vertexCount) + a][1] = this.readFloat();
                 }
             }
         }
@@ -247,6 +248,7 @@ export class RwFile extends ByteStream {
 
         return {
             colorInformation,
+            textureCoordinatesCount,
             textureMappingInformation,
             faceInformation,
             boundingSphere,
@@ -358,15 +360,12 @@ export class RwFile extends ByteStream {
         this.readSectionHeader();
         this.readSectionHeader();
 
-        const textureFilterFlags:number = this.readUint16();
+        const textureData:number = this.readUint32();
 
-        const textureFiltering = (textureFilterFlags & 0xFF000000) >> 24;
-        const uAddressing = (textureFilterFlags & 0xF000000) >> 20;
-        const vAddressing = (textureFilterFlags & 0xF0000) >> 16;
-        const usesMipLevels = (textureFilterFlags & (1 << 15)) !== 0;
-
-        // Unknown - not used
-        this.skip(2);
+        const textureFiltering = (textureData & 0xFF);
+        const uAddressing = (textureData & 0xF00) >> 8;
+        const vAddressing = (textureData & 0xF000) >> 12;
+        const usesMipLevels = (textureData & (1 << 16)) !== 0;
 
         let nameSize = this.readSectionHeader().sectionSize;
         const textureName:string = this.readString(nameSize);
