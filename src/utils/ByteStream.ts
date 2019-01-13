@@ -52,6 +52,10 @@ export class ByteStream {
         return data
     }
 
+    public getSize() {
+        return this._stream.byteLength;
+    }
+
     public getPosition() {
         return this._cursor;
     }
