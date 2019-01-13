@@ -1,9 +1,12 @@
 import fs = require('fs');
 import { DffParser } from './renderware/dff/DffParser';
 import { TxdParser } from './renderware/txd/TxdParser';
+import { IplParser } from './renderware/ipl/IplParser';
 
 let dff = new DffParser(fs.readFileSync('./assets/copcarla.dff')).parse();
 let txd = new TxdParser(fs.readFileSync('./assets/copcarla.txd')).parse();
+
+//let ipl = new IplParser(fs.readFileSync('./assets/maps/SF/SFe.ipl')).parse();
 
 let output = JSON.stringify({model: dff, textures: txd});
 
