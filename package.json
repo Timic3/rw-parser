@@ -1,10 +1,9 @@
 {
-  "name": "dff-parser",
+  "name": "rw-parser",
   "version": "1.0.0",
-  "description": "Parses RenderWare DFF files",
+  "description": "Parses RenderWare DFF and TXD files",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "private": true,
   "dependencies": {
     "dxt-js": "0.0.3",
     "jimp": "^0.6.0"
@@ -13,9 +12,21 @@
     "@types/node": "^10.12.18",
     "typescript": "^3.2.2"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Timic3/rw-parser.git"
+  },
+  "keywords": [
+    "gta",
+    "gtasa",
+    "san andreas",
+    "renderware",
+    "parser"
+  ],
   "scripts": {
     "build": "tsc"
   },
+  "homepage": "https://github.com/Timic3/rw-parser#readme",
   "author": "Timic3 & Megadreams",
   "license": "GPL-3.0"
 }
