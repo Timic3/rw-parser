@@ -41,7 +41,7 @@ export class ByteStream {
         const string = this._stream.toString('ascii', this._cursor, this._cursor + size);
         this._cursor += size;
 
-        return string.replace(/\0/g, '');
+        return string.split(/\0/g).shift();
     }
 
     public read(size: number) {
