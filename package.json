@@ -1,6 +1,6 @@
 {
   "name": "rw-parser",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Parses RenderWare DFF and TXD files into usable format!",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
