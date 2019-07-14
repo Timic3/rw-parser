@@ -75,7 +75,7 @@ export interface RwMesh {
 export class DffParser extends RwFile {
 
     constructor(buffer: Buffer) {
-        super(buffer)
+        super(buffer);
     }
 
     parse() {
@@ -84,7 +84,7 @@ export class DffParser extends RwFile {
         let geometryList;
         let frameList;
 
-        while (this._cursor < this.getSize()) {
+        while (this.getPosition() < this.getSize()) {
             const header = this.readSectionHeader();
 
             if (header.sectionType === 0) {
@@ -137,8 +137,8 @@ export class DffParser extends RwFile {
         const objectCount = this.readUint32();
 
         // Let's assume the following 8 bytes are paddings
-        this._cursor += 8;
-        return { objectCount }
+        this.skip(8);
+        return { objectCount };
     }
 
     public readFrameList(): RwFrameList {
@@ -162,12 +162,12 @@ export class DffParser extends RwFile {
             const parentFrame = this.readInt32();
 
             // Skip 4 bytes - not used
-            this._cursor += 4;
+            this.skip(8);
 
             frames.push({ rotationMatrix, coordinatesOffset, parentFrame });
         }
 
-        return { numberOfFrames, frames }
+        return { numberOfFrames, frames };
     }
 
     public readGeometryList(): RwGeometryList {
@@ -183,7 +183,7 @@ export class DffParser extends RwFile {
             geometries.push(geometryData);
         }
 
-        return { numberOfGeometricObjects, geometries }
+        return { numberOfGeometricObjects, geometries };
     }
 
     public readGeometry(): RwGeometry {
@@ -246,7 +246,7 @@ export class DffParser extends RwFile {
 
         // TODO: Repeat according to morphTargetCount
 
-        const boundingSphere = []
+        const boundingSphere = [];
         // X, Y, Z, Radius
         boundingSphere[0] = this.readFloat();
         boundingSphere[1] = this.readFloat();
@@ -397,7 +397,7 @@ export class DffParser extends RwFile {
         this.readSectionHeader();
         this.readSectionHeader();
 
-        const textureData:number = this.readUint32();
+        const textureData = this.readUint32();
 
         const textureFiltering = (textureData & 0xFF);
         const uAddressing = (textureData & 0xF00) >> 8;
@@ -405,7 +405,7 @@ export class DffParser extends RwFile {
         const usesMipLevels = (textureData & (1 << 16)) !== 0;
 
         let nameSize = this.readSectionHeader().sectionSize;
-        const textureName:string = this.readString(nameSize);
+        const textureName = this.readString(nameSize);
 
         this.skip(this.readSectionHeader().sectionSize);
 
@@ -423,5 +423,4 @@ export class DffParser extends RwFile {
         this.skip(8);
         return { frameIndex, geometryIndex };
     }
-
 }

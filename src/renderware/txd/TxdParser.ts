@@ -32,7 +32,7 @@ export interface RwTextureNative {
 export class TxdParser extends RwFile {
 
     constructor(stream: Buffer) {
-        super(stream)
+        super(stream);
     }
 
     parse() {
@@ -106,7 +106,7 @@ export class TxdParser extends RwFile {
 
             if (i == 0) {
                 // Raw RGBA presentation
-                var raw:any;
+                var raw: any;
 
                 if (compressed || d3dFormat.includes('DXT')) {
                     raw = dxt.decompress(raster, mipWidth, mipHeight, dxt.flags[d3dFormat]);
@@ -145,5 +145,4 @@ export class TxdParser extends RwFile {
         return { platformId, filterMode, uAddressing, vAddressing, textureName, maskName, rasterFormat,
             d3dFormat, width, height, depth, mipmapCount, rasterType, alpha, cubeTexture, autoMipMaps, compressed, mipmaps };
     }
-
 }

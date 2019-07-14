@@ -1,16 +1,16 @@
 {
   "name": "rw-parser",
   "version": "1.0.2",
-  "description": "Parses RenderWare DFF and TXD files",
+  "description": "Parses RenderWare DFF and TXD files into usable format!",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "dependencies": {
     "dxt-js": "0.0.3",
-    "jimp": "^0.6.0"
+    "jimp": "^0.6.4"
   },
   "devDependencies": {
-    "@types/node": "^10.12.18",
-    "typescript": "^3.2.2"
+    "@types/node": "^12.6.2",
+    "typescript": "^3.5.3"
   },
   "repository": {
     "type": "git",
@@ -21,10 +21,8 @@
     "gtasa",
     "san andreas",
     "renderware",
-    "parser"
-  ],
-  "files": [
-    "lib/**/*"
+    "parser",
+    "rw-parser"
   ],
   "scripts": {
     "build": "tsc",

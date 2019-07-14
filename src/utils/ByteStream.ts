@@ -1,7 +1,7 @@
 
 export class ByteStream {
-    _cursor = 0;
-    _stream: Buffer;
+    private _cursor = 0;
+    private _stream: Buffer;
 
     constructor(stream: Buffer) {
         this._stream = stream;

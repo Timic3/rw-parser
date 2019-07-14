@@ -17,7 +17,6 @@ export class RwFile extends ByteStream {
         const sectionSize = this.readUint32();
         const versionNumber = this.readUint32();
 
-        return { sectionType, sectionSize, versionNumber }
+        return { sectionType, sectionSize, versionNumber };
     }
-
 }
