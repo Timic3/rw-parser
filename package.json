@@ -30,5 +30,13 @@
     "build": "tsc",
     "dev": "tsc -p tsconfig.json --watch",
     "prepare": "npm run build"
-  }
+  },
+  "files": [
+    "lib",
+    "src",
+    "LICENSE",
+    "README.md",
+    "package.json",
+    "tsconfig.json"
+  ]
 }
