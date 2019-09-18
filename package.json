@@ -2,16 +2,9 @@
   "name": "rw-parser",
   "version": "1.0.3",
   "description": "Parses RenderWare DFF and TXD files into usable format!",
-  "main": "lib/index.js",
-  "types": "lib/index.d.ts",
-  "dependencies": {
-    "dxt-js": "0.0.3",
-    "jimp": "^0.6.4"
-  },
-  "devDependencies": {
-    "@types/node": "^12.6.2",
-    "typescript": "^3.5.3"
-  },
+  "author": "Timic3 & Megadreams",
+  "license": "GPL-3.0",
+  "homepage": "https://github.com/Timic3/rw-parser#readme",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Timic3/rw-parser.git"
@@ -24,11 +17,18 @@
     "parser",
     "rw-parser"
   ],
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "dependencies": {
+    "dxt-js": "0.0.3"
+  },
+  "devDependencies": {
+    "@types/node": "^12.7.5",
+    "typescript": "^3.6.3"
+  },
   "scripts": {
     "build": "tsc",
+    "dev": "tsc -p tsconfig.json --watch",
     "prepare": "npm run build"
-  },
-  "homepage": "https://github.com/Timic3/rw-parser#readme",
-  "author": "Timic3 & Megadreams",
-  "license": "GPL-3.0"
+  }
 }

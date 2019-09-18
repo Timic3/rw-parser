@@ -1,6 +1,5 @@
 import { RwFile } from '../RwFile';
 
-const Jimp = require('jimp');
 const dxt = require('dxt-js');
 
 export interface RwTextureDictionary {
@@ -97,7 +96,7 @@ export class TxdParser extends RwFile {
         let mipWidth = width;
         let mipHeight = height;
 
-        var mipmaps = Array<any>();
+        var mipmaps = Array<number[]>();
 
         for (let i = 0; i < mipmapCount; i++) {
 
@@ -106,33 +105,15 @@ export class TxdParser extends RwFile {
 
             if (i == 0) {
                 // Raw RGBA presentation
-                var raw: any;
+                var bitmap: number[];
 
                 if (compressed || d3dFormat.includes('DXT')) {
-                    raw = dxt.decompress(raster, mipWidth, mipHeight, dxt.flags[d3dFormat]);
+                    bitmap = Array.from(dxt.decompress(raster, mipWidth, mipHeight, dxt.flags[d3dFormat]));
                 } else {
-                    raw = Array.from(raster);
+                    bitmap = Array.from(raster);
                 }
 
-                let pixels: number[][] = [];
-
-                for (let i = 0; i < raw.length; i += 4) {
-                    const chunk = raw.slice(i, i + 4);
-                    pixels.push(chunk);
-                }
-
-                let jimp = new Jimp(mipWidth, mipHeight, (_ : any, image : any) => {});
-
-                let i = 0;
-                for (let x = 0; x < mipHeight; x++) {
-                    for (let y = 0; y < mipWidth; y++) {
-                        const hex = Jimp.rgbaToInt(pixels[i][0], pixels[i][1], pixels[i][2], pixels[i][3]);
-                        i++;
-                        jimp.setPixelColor(hex, y, x);
-                    }
-                }
-
-                mipmaps.push([...jimp.bitmap.data]);
+                mipmaps.push(bitmap);
             }
 
             mipWidth /= 2;

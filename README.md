@@ -20,6 +20,9 @@ Parses RenderWare DFF and TXD files into usable format!
     ```js
     import { DffParser } from 'rw-parser';
     ```
+
+The beauty of this is you can use it within browser or as a backend with Node.js!
+    
 **Documentation is not done yet (working on it), but you can check an example [here](https://github.com/Timic3/rw-parser/tree/master/examples).**
 
 ## Development
@@ -29,6 +32,6 @@ Parses RenderWare DFF and TXD files into usable format!
  3. Compile TypeScript source files using `tsc`
  4. Run parser using `node .`
 
-Optionally, you may set up a task that watches for file changes: `tsc -p tsconfig.json --watch`.
+Optionally, you may set up a task that watches for file changes: `tsc -p tsconfig.json --watch` or `npm run dev`.
 
-Please note that this project is still under heavy development. If you have any questions or problems, create an issue.
+Please note that this project is still under heavy development. **Changes to output structure may happen, so be careful using it in production environment!** If you have any questions or problems, create an issue.

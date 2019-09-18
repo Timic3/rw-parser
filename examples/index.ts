@@ -1,6 +1,6 @@
 import fs = require('fs');
-import { DffParser } from './renderware/dff/DffParser';
-import { TxdParser } from './renderware/txd/TxdParser';
+import { DffParser } from '../lib/renderware/dff/DffParser';
+import { TxdParser } from '../lib/renderware/txd/TxdParser';
 
 let dff = new DffParser(fs.readFileSync('./assets/copcarla.dff')).parse();
 let txd = new TxdParser(fs.readFileSync('./assets/copcarla.txd')).parse();
