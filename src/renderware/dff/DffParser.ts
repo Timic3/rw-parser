@@ -278,10 +278,11 @@ export class DffParser extends RwFile {
 
         let materialList = this.readMaterialList();
 
-        this.readSectionHeader().sectionSize;
+        let sectionSize = this.readSectionHeader().sectionSize;
+        let position = this.getPosition();
         let binMesh = this.readBinMesh();
 
-        this.skip(this.readSectionHeader().sectionSize);
+        this.setPosition(position + sectionSize);
 
         return {
             colorInformation,
@@ -302,7 +303,6 @@ export class DffParser extends RwFile {
         this.skip(4);
 
         const meshCount = this.readUint32();
-
         this.skip(4);
 
         const meshes = Array<RwMesh>();
@@ -335,7 +335,6 @@ export class DffParser extends RwFile {
         this.readSectionHeader();
         this.readSectionHeader();
         const materialInstanceCount = this.readUint32();
-
         const materialIndexes = Array<number>();
 
         for (let i = 0; i < materialInstanceCount; i++) {
