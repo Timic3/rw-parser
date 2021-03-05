@@ -3,6 +3,7 @@ build
 node_modules
 output
 
+examples/*.js
 examples/assets/*
 !examples/assets/infernus.dff
 !examples/assets/infernus.txd

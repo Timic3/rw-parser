@@ -162,7 +162,7 @@ export class DffParser extends RwFile {
             const parentFrame = this.readInt32();
 
             // Skip 4 bytes - not used
-            this.skip(8);
+            this.skip(4);
 
             frames.push({ rotationMatrix, coordinatesOffset, parentFrame });
         }
