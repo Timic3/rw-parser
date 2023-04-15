@@ -1,4 +1,5 @@
 export enum RwSections {
+    // Core
     RwStruct = 0x0001,
     RwString = 0x0002,
     RwExtension = 0x0003,
@@ -12,7 +13,13 @@ export enum RwSections {
     RwTextureNative = 0x0015,
     RwTextureDictionary = 0x0016,
     RwGeometryList = 0x001A,
+
+    // Toolkit
     RwMaterialEffectsPLG = 0x0120,
+
+    // R* specific RW plugins
     RwReflectionMaterial = 0x0253F2FC,
-    RwFrame = 0x0253F2FE
+    // This was renamed to RwNodeName from RwFrame to prevent confusion.
+    // https://gtamods.com/wiki/Node_Name_(RW_Section)
+    RwNodeName = 0x0253F2FE,
 }
