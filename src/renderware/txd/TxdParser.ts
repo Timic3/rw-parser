@@ -2,9 +2,13 @@ import { RwFile } from '../RwFile';
 
 const dxt = require('dxt-js');
 
+export interface RwTxd {
+    textureDictionary: RwTextureDictionary,
+}
+
 export interface RwTextureDictionary {
     textureCount: number,
-    textureNatives: Array<RwTextureNative>
+    textureNatives: RwTextureNative[],
 }
 
 export interface RwTextureNative {
@@ -25,7 +29,7 @@ export interface RwTextureNative {
     cubeTexture: boolean,
     autoMipMaps: boolean,
     compressed: boolean,
-    mipmaps: Array<number[]>
+    mipmaps: number[][],
 }
 
 export class TxdParser extends RwFile {
@@ -34,9 +38,9 @@ export class TxdParser extends RwFile {
         super(stream);
     }
 
-    parse() {
+    parse(): RwTxd {
         return {
-            textureDictionary: this.readTextureDictionary()
+            textureDictionary: this.readTextureDictionary(),
         };
     }
 
@@ -47,7 +51,7 @@ export class TxdParser extends RwFile {
         const textureCount = this.readUint16();
         this.skip(2);
 
-        let textureNatives = Array<RwTextureNative>();
+        let textureNatives: RwTextureNative[] = [];
 
         for (let i = 0; i < textureCount; i++) {
             let textureNative = this.readTextureNative();
@@ -83,8 +87,8 @@ export class TxdParser extends RwFile {
         const mipmapCount = this.readUint8();
         const rasterType = this.readUint8();
 
-        const isPAL4 = rasterType & 0x4000;
-        const isPAL8 = rasterType & 0x2000;
+        const _isPAL4 = rasterType & 0x4000;
+        const _isPAL8 = rasterType & 0x2000;
 
         const compressionFlags = this.readUint8();
 
@@ -96,7 +100,7 @@ export class TxdParser extends RwFile {
         let mipWidth = width;
         let mipHeight = height;
 
-        var mipmaps = Array<number[]>();
+        let mipmaps: number[][] = [];
 
         for (let i = 0; i < mipmapCount; i++) {
 
@@ -105,7 +109,7 @@ export class TxdParser extends RwFile {
 
             if (i == 0) {
                 // Raw RGBA presentation
-                var bitmap: number[];
+                let bitmap: number[];
 
                 if (compressed || d3dFormat.includes('DXT')) {
                     bitmap = Array.from(dxt.decompress(raster, mipWidth, mipHeight, dxt.flags[d3dFormat]));
@@ -123,7 +127,21 @@ export class TxdParser extends RwFile {
         // Skip extension
         this.skip(this.readSectionHeader().sectionSize);
 
-        return { platformId, filterMode, uAddressing, vAddressing, textureName, maskName, rasterFormat,
-            d3dFormat, width, height, depth, mipmapCount, rasterType, alpha, cubeTexture, autoMipMaps, compressed, mipmaps };
+        return {
+            platformId,
+            filterMode,
+            uAddressing, vAddressing,
+            textureName, maskName,
+            rasterFormat,
+            d3dFormat,
+            width, height, depth,
+            mipmapCount,
+            rasterType,
+            alpha,
+            cubeTexture,
+            autoMipMaps,
+            compressed,
+            mipmaps,
+        };
     }
 }
