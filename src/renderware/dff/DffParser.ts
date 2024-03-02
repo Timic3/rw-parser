@@ -19,13 +19,13 @@ export interface RwClump {
 }
 
 export interface RwFrame {
-    rotationMatrix: number[],
-    coordinatesOffset: number[],
+    rotationMatrix: RwMatrix3,
+    coordinatesOffset: RwVector3,
     parentFrame: number,
 }
 
 export interface RwFrameList {
-    numberOfFrames: number,
+    frameCount: number,
     frames: RwFrame[],
 }
 
@@ -52,21 +52,21 @@ export interface RwMaterialList {
 }
 
 export interface RwGeometry {
-    colorInformation: number[][],
+    vertexColorInformation: RwColor[],
     textureCoordinatesCount: number,
-    textureMappingInformation: number[][],
-    faceInformation: number[][],
-    boundingSphere?: number[],
+    textureMappingInformation: RwTextureCoordinate[][],
     hasVertices: boolean,
     hasNormals: boolean,
-    vertexInformation: number[][],
-    normalInformation: number[][],
+    triangleInformation: RwTriangle[],
+    vertexInformation: RwVector3[],
+    normalInformation: RwVector3[],
+    boundingSphere?: RwSphere,
     materialList: RwMaterialList,
     binMesh: RwBinMesh,
 }
 
 export interface RwGeometryList {
-    numberOfGeometricObjects: number,
+    geometricObjectCount: number,
     geometries: RwGeometry[],
 }
 
@@ -85,6 +85,45 @@ export interface RwMesh {
     materialIndex: number,
     indexCount: number,
     indices: number[],
+}
+
+export interface RwMatrix3 {
+    right: RwVector3,
+    up: RwVector3,
+    at: RwVector3,
+}
+
+export interface RwColor {
+    r: number,
+    g: number,
+    b: number,
+    a: number,
+}
+
+export interface RwVector2 {
+    x: number,
+    y: number,
+}
+
+export interface RwVector3 {
+    x: number,
+    y: number,
+    z: number,
+}
+
+export interface RwTextureCoordinate {
+    u: number,
+    v: number,
+}
+
+export interface RwTriangle {
+    vector: RwVector3,
+    materialId: number,
+}
+
+export interface RwSphere {
+    vector: RwVector3,
+    radius: number,
 }
 
 export class DffParser extends RwFile {
@@ -183,48 +222,48 @@ export class DffParser extends RwFile {
     public readFrameList(): RwFrameList {
         this.readSectionHeader();
 
-        const numberOfFrames = this.readUint32();
+        const frameCount = this.readUint32();
 
         let frames: RwFrame[] = [];
 
-        for (let i = 0; i < numberOfFrames; i++) {
+        for (let i = 0; i < frameCount; i++) {
             // All these could probably be moved to readFrameData()
-            const rotationMatrix = [];
-            for (let i = 0; i < 9; i++) {
-                rotationMatrix[i] = this.readFloat();
+
+            const rotationMatrix: RwMatrix3 = {
+                right: { x: this.readFloat(), y: this.readFloat(), z: this.readFloat() },
+                up: { x: this.readFloat(), y: this.readFloat(), z: this.readFloat() },
+                at: { x: this.readFloat(), y: this.readFloat(), z: this.readFloat() },
             }
 
-            const coordinatesOffset = [];
-            for (let i = 0; i < 3; i++) {
-                coordinatesOffset[i] = this.readFloat();
-            }
+            const coordinatesOffset: RwVector3 = { x: this.readFloat(), y: this.readFloat(), z: this.readFloat() };
 
             const parentFrame = this.readInt32();
 
-            // Skip 4 bytes - not used
+            // Skip matrix creation internal flags
+            // They are read by the game but are not used
             this.skip(4);
 
             frames.push({ rotationMatrix, coordinatesOffset, parentFrame });
         }
 
-        return { numberOfFrames, frames };
+        return { frameCount, frames };
     }
 
     public readGeometryList(): RwGeometryList {
         const header = this.readSectionHeader();
 
-        const numberOfGeometricObjects = this.readUint32();
+        const geometricObjectCount = this.readUint32();
 
         let geometries: RwGeometry[] = [];
 
-        for (let i = 0; i < numberOfGeometricObjects; i++) {
+        for (let i = 0; i < geometricObjectCount; i++) {
             this.readSectionHeader();
             this.readSectionHeader();
             const geometryData = this.readGeometry(header.versionNumber);
             geometries.push(geometryData);
         }
 
-        return { numberOfGeometricObjects, geometries };
+        return { geometricObjectCount, geometries };
     }
 
     public readGeometry(versionNumber: number): RwGeometry {
@@ -255,54 +294,43 @@ export class DffParser extends RwFile {
         const _shouldModulateMaterialColor = (flags & (1 << 6)) !== 0;
         const isTexturedUV2 = (flags & (1 << 7)) !== 0;
 
-        const colorInformation = [];
-        const textureMappingInformation = [];
-        const faceInformation = [];
+        const vertexColorInformation: RwColor[] = [];
+        const textureMappingInformation: RwTextureCoordinate[][] = [];
+        const triangleInformation: RwTriangle[] = [];
 
         // Geometry is marked as prelit
         if (isGeometryPrelit) {
             for (let i = 0; i < vertexCount; i++) {
-                colorInformation[i] = [] as number[];
-                // R, G, B, A
-                colorInformation[i][0] = this.readUint8();
-                colorInformation[i][1] = this.readUint8();
-                colorInformation[i][2] = this.readUint8();
-                colorInformation[i][3] = this.readUint8();
+                vertexColorInformation[i] = { r: this.readUint8(), g: this.readUint8(), b: this.readUint8(), a: this.readUint8() };
             }
         }
 
         // Geometry either has first or second texture
         if (isTexturedUV1 || isTexturedUV2) {
-            for (let i = 0; i < textureCoordinatesCount; i++) {
-                for (let j = 0; j < vertexCount; j++) {
-                    textureMappingInformation[(i * vertexCount) + j] = [] as number[];
-                    // U, V
-                    textureMappingInformation[(i * vertexCount) + j][0] = this.readFloat();
-                    textureMappingInformation[(i * vertexCount) + j][1] = this.readFloat();
+            for (let textureCoordinateIndex = 0; textureCoordinateIndex < textureCoordinatesCount; textureCoordinateIndex++) {
+                textureMappingInformation[textureCoordinateIndex] = [];
+                for (let vertexIndex = 0; vertexIndex < vertexCount; vertexIndex++) {
+                    textureMappingInformation[textureCoordinateIndex][vertexIndex] = { u: this.readFloat(), v: this.readFloat() };
                 }
             }
         }
 
         for (let i = 0; i < triangleCount; i++) {
-            faceInformation[i] = [] as number[];
-            // TODO: Order this as we should
-            // Vertex 2, Vertex 1, Material ID / Flags, Vertex 3
-            faceInformation[i][0] = this.readUint16();
-            faceInformation[i][1] = this.readUint16();
-            faceInformation[i][2] = this.readUint16();
-            faceInformation[i][3] = this.readUint16();
+            // Information is written in this order
+            const vertex2 = this.readUint16();
+            const vertex1 = this.readUint16();
+            const materialId = this.readUint16();
+            const vertex3 = this.readUint16();
+            triangleInformation[i] = { vector: { x: vertex1, y: vertex2, z: vertex3 }, materialId: materialId }
         }
 
         // We are sure that there's only one morph target, but if
         // we are wrong, we have to loop these through morphTargetCount
 
-        let boundingSphere = [];
-
-        // X, Y, Z, Radius
-        boundingSphere[0] = this.readFloat();
-        boundingSphere[1] = this.readFloat();
-        boundingSphere[2] = this.readFloat();
-        boundingSphere[3] = this.readFloat();
+        const boundingSphere: RwSphere = {
+            vector: { x: this.readFloat(), y: this.readFloat(), z: this.readFloat() },
+            radius: this.readFloat(),
+        };
 
         const hasVertices = !!this.readUint32();
         const hasNormals = !!this.readUint32();
@@ -310,22 +338,14 @@ export class DffParser extends RwFile {
         const vertexInformation = [];
         if (hasVertices) {
             for (let i = 0; i < vertexCount; i++) {
-                vertexInformation[i] = [] as number[];
-                // X, Y, Z
-                vertexInformation[i][0] = this.readFloat();
-                vertexInformation[i][1] = this.readFloat();
-                vertexInformation[i][2] = this.readFloat();
+                vertexInformation[i] = { x: this.readFloat(), y: this.readFloat(), z: this.readFloat() };
             }
         }
 
         const normalInformation = [];
         if (hasNormals) {
             for (let i = 0; i < vertexCount; i++) {
-                normalInformation[i] = [] as number[];
-                // X, Y, Z
-                normalInformation[i][0] = this.readFloat();
-                normalInformation[i][1] = this.readFloat();
-                normalInformation[i][2] = this.readFloat();
+                normalInformation[i] = { x: this.readFloat(), y: this.readFloat(), z: this.readFloat() };
             }
         }
 
@@ -338,21 +358,21 @@ export class DffParser extends RwFile {
         this.setPosition(position + sectionSize);
 
         return {
-            colorInformation,
             textureCoordinatesCount,
             textureMappingInformation,
-            faceInformation,
             boundingSphere,
             hasVertices,
             hasNormals,
+            vertexColorInformation,
             vertexInformation,
             normalInformation,
+            triangleInformation,
             materialList,
             binMesh,
         };
     }
 
-    public readBinMesh() : RwBinMesh {
+    public readBinMesh(): RwBinMesh {
         this.readSectionHeader();
 
         // Flags (0: triangle list, 1: triangle strip)
@@ -374,7 +394,7 @@ export class DffParser extends RwFile {
         };
     }
 
-    public readMesh() : RwMesh {
+    public readMesh(): RwMesh {
         const indexCount = this.readUint32();
         const materialIndex = this.readUint32();
 
@@ -389,7 +409,7 @@ export class DffParser extends RwFile {
         };
     }
 
-    public readMaterialList() : RwMaterialList {
+    public readMaterialList(): RwMaterialList {
         this.readSectionHeader();
         this.readSectionHeader();
 
@@ -416,7 +436,7 @@ export class DffParser extends RwFile {
         return { materialInstanceCount, materialData };
     }
 
-    public readMaterial() : RwMaterial {
+    public readMaterial(): RwMaterial {
         this.readSectionHeader();
         const header = this.readSectionHeader();
 
@@ -457,7 +477,7 @@ export class DffParser extends RwFile {
         return { color, isTextured, ambient, specular, diffuse, texture };
     }
 
-    public readTexture() : RwTexture {
+    public readTexture(): RwTexture {
         this.readSectionHeader();
         this.readSectionHeader();
 
