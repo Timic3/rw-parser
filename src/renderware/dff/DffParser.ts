@@ -38,8 +38,8 @@ export interface RwTexture {
 }
 
 export interface RwMaterial {
-    color: number[],
-    isTextured: number,
+    color: RwColor,
+    isTextured: boolean,
     ambient?: number,
     specular?: number,
     diffuse?: number,
@@ -443,16 +443,12 @@ export class DffParser extends RwFile {
         // Flags - not used
         this.skip(4);
 
-        const color = [];
-        color[0] = this.readUint8();
-        color[1] = this.readUint8();
-        color[2] = this.readUint8();
-        color[3] = this.readUint8();
+        const color: RwColor = { r: this.readUint8(), g: this.readUint8(), b: this.readUint8(), a: this.readUint8() };
 
         // Unknown - not used
         this.skip(4);
 
-        const isTextured = this.readUint32();
+        const isTextured = this.readUint32() > 0;
 
         // Surface properties
         let ambient;
@@ -467,7 +463,7 @@ export class DffParser extends RwFile {
 
         let texture;
 
-        if (isTextured > 0) {
+        if (isTextured) {
             texture = this.readTexture();
         }
 

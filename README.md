@@ -25,6 +25,38 @@ The beauty of this is you can use it within browser or as a backend with Node.js
     
 **Documentation is not done yet (working on it), but you can check an example [here](https://github.com/Timic3/rw-parser/tree/master/examples).**
 
+## Example
+
+You can parse a DFF and TXD object with the following code:
+
+```ts
+import { DffParser, TxdParser } from 'rw-parser';
+
+// All types are now exported in index
+import type { RwDff, RwTxd } from 'rw-parser';
+
+import { Buffer } from 'buffer';
+import { readFileSync } from 'fs';
+
+// Assuming top-level await is supported
+// Can be used with browser as well
+const resourceUri = 'http://localhost:5321/assets/infernus.dff';
+const dffResource = (await fetch(resourceUri)).arrayBuffer();
+
+// Pass Buffer here. If you are developing browser application, use
+// a browser shim, like: https://github.com/feross/buffer
+const dffParser = new DffParser(Buffer.from(dffResource));
+
+// TXD parsing is practically same, this example just shows
+// how to parse via local filesystem in Node
+const txdResource = readFileSync('./assets/infernus.txd');
+const txdParser = new TxdParser(txdResource);
+
+// Parse TXD and DFF, which will return parsed structure
+const txd: RwTxd = txdParser.parse();
+const dff: RwDff = dffParser.parse();
+```
+
 ## Development
 
  1. Clone the repository or download the source code [here](https://github.com/Timic3/rw-parser/archive/master.zip)
