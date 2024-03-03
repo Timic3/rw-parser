@@ -5,7 +5,8 @@
 Parses RenderWare DFF and TXD files into usable format!
 
 ## Used in projects
-- None yet
+
+None yet, but feel free to contact us, if you're using the parser in your projects. According to our testings, this parser was successfully used to display GTA: SA models in a web browser without much hassle.
 
 ## Usage
 
@@ -23,7 +24,7 @@ Parses RenderWare DFF and TXD files into usable format!
 
 The beauty of this is you can use it within browser or as a backend with Node.js!
     
-**Documentation is not done yet (working on it), but you can check an example [here](https://github.com/Timic3/rw-parser/tree/master/examples).**
+**Documentation is not done yet but feel free to ask questions in [discussions](https://github.com/Timic3/rw-parser/discussions).**
 
 ## Example
 
@@ -61,9 +62,9 @@ const dff: RwDff = dffParser.parse();
 
  1. Clone the repository or download the source code [here](https://github.com/Timic3/rw-parser/archive/master.zip)
  2. Install dependencies using `npm install`
- 3. Compile TypeScript source files using `tsc`
- 4. Run parser using `node .`
+ 3. Compile TypeScript source files using `npm run build`
+ 4. Run tests with `npm run tests` or tinker with the code a bit, CLI tool is coming soon as well
 
-Optionally, you may set up a task that watches for file changes: `tsc -p tsconfig.json --watch` or `npm run dev`.
+Optionally, you may set up a task that watches for file changes: `npm run dev` or `tsc -p tsconfig.json --watch`.
 
-Please note that this project is still under heavy development. **Changes to output structure may happen, so be careful using it in production environment!** If you have any questions or problems, create an issue.
+Please note that this project is still under heavy development. **Changes to output structure may happen, so be careful using it in production environment!** If you have any questions or problems, feel free to open a [discussion](https://github.com/Timic3/rw-parser/discussions).
