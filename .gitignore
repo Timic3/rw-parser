@@ -3,12 +3,4 @@ build
 node_modules
 output
 
-examples/*.js
-examples/assets/*
-!examples/assets/infernus.dff
-!examples/assets/infernus.txd
-!examples/assets/infernus2.dff
-!examples/assets/bullet.dff
-!examples/assets/bullet.txd
-!examples/assets/copcarla.dff
-!examples/assets/copcarla.txd
+coverage
