@@ -68,6 +68,8 @@ export class TxdParser extends RwFile {
         this.readSectionHeader();
         this.readSectionHeader();
 
+        // TODO: Structure this part better
+        // Texture format
         const platformId = this.readUint32();
         const flags = this.readUint32();
 
@@ -78,6 +80,7 @@ export class TxdParser extends RwFile {
         const textureName = this.readString(32);
         const maskName = this.readString(32);
 
+        // Raster format
         const rasterFormat = this.readUint32();
 
         const d3dFormat = this.readString(4);
@@ -114,6 +117,21 @@ export class TxdParser extends RwFile {
                 if (compressed || d3dFormat.includes('DXT')) {
                     bitmap = Array.from(dxt.decompress(raster, mipWidth, mipHeight, dxt.flags[d3dFormat]));
                 } else {
+                    // TODO: Make raster format an enum and add more formats
+                    // All formats are in D3D9 color order (BGRA), so we swap them
+
+                    switch (rasterFormat) {
+                        // FORMAT_8888, depth 32 (D3DFMT_A8R8G8B8)
+                        case 0x0500:
+                        // FORMAT_888 (RGB 8 bits each, D3DFMT_X8R8G8B8)
+                        case 0x0600:
+                            for (let i = 0; i < raster.length; i += 4) {
+                                // Fancy array destructuring, just swaps R and B values
+                                [raster[i], raster[i + 2]] = [raster[i + 2], raster[i]];
+                            }
+                            break;
+                    }
+
                     bitmap = Array.from(raster);
                 }
 
