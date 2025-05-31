@@ -13,6 +13,7 @@ export enum RwSections {
     RwTextureNative = 0x0015,
     RwTextureDictionary = 0x0016,
     RwGeometryList = 0x001A,
+    RwSkin = 0x116,  
 
     // Toolkit
     RwMaterialEffectsPLG = 0x0120,

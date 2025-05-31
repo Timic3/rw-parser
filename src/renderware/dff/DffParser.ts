@@ -63,6 +63,7 @@ export interface RwGeometry {
     boundingSphere?: RwSphere,
     materialList: RwMaterialList,
     binMesh: RwBinMesh,
+    skin?: RwSkin, 
 }
 
 export interface RwGeometryList {
@@ -79,6 +80,15 @@ export interface RwAtomic {
 export interface RwBinMesh {
     meshCount: number,
     meshes: RwMesh[],
+}
+
+export interface RwSkin {
+    boneCount: number,
+    usedBoneCount: number,
+    maxWeightsPerVertex: number,
+    boneVertexIndices: number[][],
+    vertexWeights: number[][],
+    inverseBoneMatrices: number[][],
 }
 
 export interface RwMesh {
@@ -350,10 +360,14 @@ export class DffParser extends RwFile {
         }
 
         let materialList = this.readMaterialList();
-
         let sectionSize = this.readSectionHeader().sectionSize;
         let position = this.getPosition();
         let binMesh = this.readBinMesh();
+        let skin = undefined;
+
+        if(this.readSectionHeader().sectionType == RwSections.RwSkin) {
+            skin = this.readSkin(vertexCount);
+        }
 
         this.setPosition(position + sectionSize);
 
@@ -369,6 +383,7 @@ export class DffParser extends RwFile {
             triangleInformation,
             materialList,
             binMesh,
+            skin, 
         };
     }
 
@@ -392,6 +407,53 @@ export class DffParser extends RwFile {
         return {
             meshCount, meshes
         };
+    }
+
+    public readSkin(vertexCount : number): RwSkin {                                                                                
+        const boneCount = this.readUint8();
+        const usedBoneCount = this.readUint8();
+        const maxWeightsPerVertex = this.readUint8();
+
+        this.skip(1);               // Padding
+        this.skip(usedBoneCount);   // Skipping special indices
+
+        const boneVertexIndices: number[][] = [];                  
+        const vertexWeights: number[][] = [];     
+        const inverseBoneMatrices: number[][] = [];     
+
+        for (let i = 0; i < vertexCount; i++) {
+            const indices: number[] = [];
+            for(let j = 0; j < maxWeightsPerVertex; j++) {
+                indices.push(this.readUint8());
+            }
+            boneVertexIndices.push(indices);
+         }
+
+        for (let i = 0; i < vertexCount; i++) {
+            const weights: number[] = [];
+            for(let j = 0; j < maxWeightsPerVertex; j++) {
+                weights.push(this.readFloat());
+            }
+            vertexWeights.push(weights);
+         }
+
+        for (let i = 0; i < boneCount; i++) {
+            const matrix4x4: number[] = [];
+            for(let j = 0; j < 16; j++) {
+                const value = this.readFloat();
+                matrix4x4.push(value > 0.001 ? value : 0);
+            }
+            inverseBoneMatrices.push(matrix4x4);
+         }
+
+        return {
+            boneCount,
+            usedBoneCount,
+            maxWeightsPerVertex,
+            boneVertexIndices,
+            vertexWeights,
+            inverseBoneMatrices,
+        }                                                           
     }
 
     public readMesh(): RwMesh {
