@@ -423,7 +423,7 @@ export class DffParser extends RwFile {
 
         for (let i = 0; i < vertexCount; i++) {
             const indices: number[] = [];
-            for(let j = 0; j < maxWeightsPerVertex; j++) {
+            for(let j = 0; j < 4; j++) {
                 indices.push(this.readUint8());
             }
             boneVertexIndices.push(indices);
@@ -431,7 +431,7 @@ export class DffParser extends RwFile {
 
         for (let i = 0; i < vertexCount; i++) {
             const weights: number[] = [];
-            for(let j = 0; j < maxWeightsPerVertex; j++) {
+            for(let j = 0; j < 4; j++) {
                 weights.push(this.readFloat());
             }
             vertexWeights.push(weights);
@@ -440,8 +440,7 @@ export class DffParser extends RwFile {
         for (let i = 0; i < boneCount; i++) {
             const matrix4x4: number[] = [];
             for(let j = 0; j < 16; j++) {
-                const value = this.readFloat();
-                matrix4x4.push(value > 0.001 ? value : 0);
+                matrix4x4.push(this.readFloat());
             }
             inverseBoneMatrices.push(matrix4x4);
          }
