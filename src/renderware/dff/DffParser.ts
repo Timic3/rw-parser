@@ -10,6 +10,7 @@ export interface RwDff {
     frameList: RwFrameList | null,
     atomics: number[],
     dummies: string[],
+    bones: RwBone[],
 }
 
 export interface RwClump {
@@ -18,10 +19,17 @@ export interface RwClump {
     cameraCount?: number,
 }
 
+export interface RwBone {
+    boneId: number,
+    boneCount: number,
+    flags?: number,
+    bones?: RwBone[],
+}
+
 export interface RwFrame {
     rotationMatrix: RwMatrix3,
     coordinatesOffset: RwVector3,
-    parentFrame: number,
+    parentFrame: number,   
 }
 
 export interface RwFrameList {
@@ -147,6 +155,7 @@ export class DffParser extends RwFile {
         let versionNumber: number | undefined;
         let atomics: number[] = [];
         let dummies: string[] = [];
+        let bones: RwBone[] = [];
         let geometryList: RwGeometryList | null = null;
         let frameList: RwFrameList | null = null;
 
@@ -175,6 +184,9 @@ export class DffParser extends RwFile {
                     switch (extensionHeader.sectionType) {
                         case RwSections.RwNodeName:
                             dummies.push(this.readString(extensionHeader.sectionSize));
+                            break;
+                        case RwSections.RwAnim:
+                            bones.push(this.readBones());
                             break;
                         default:
                             console.debug(`Extension type ${extensionHeader.sectionType} (${extensionHeader.sectionType.toString(16)}) not found at offset (${this.getPosition().toString(16)}). Skipping ${extensionHeader.sectionSize} bytes.`);
@@ -211,6 +223,7 @@ export class DffParser extends RwFile {
             frameList: frameList,
             atomics: atomics,
             dummies: dummies,
+            bones: bones,
         };
     }
 
@@ -409,6 +422,7 @@ export class DffParser extends RwFile {
         };
     }
 
+
     public readSkin(vertexCount : number): RwSkin {                                                                                
         const boneCount = this.readUint8();
         const usedBoneCount = this.readUint8();
@@ -454,6 +468,41 @@ export class DffParser extends RwFile {
             inverseBoneMatrices,
         }                                                           
     }
+
+    public readBones() {
+       this.skip(4);          // Skipping hAnimVersion property (0x100)
+       const boneId = this.readInt32();
+       const boneCount = this.readInt32();
+
+       if(boneId == 0) {
+        this.skip(8);           // Skipping flags and keyFrameSize properties
+       }
+
+       if(boneCount == 0) {
+        return {
+            boneId,
+            boneCount,
+           }
+       }
+       
+       const bones : RwBone[] = [];
+       
+       for(let i = 0; i < boneCount; i++) {
+        const bone = {
+            boneId: this.readInt32(), 
+            boneCount: this.readInt32(),
+            flags: this.readInt32(),
+        };
+        bones.push(bone);
+       }
+
+       return {
+        boneId,
+        boneCount,
+        bones,
+       }
+    }
+
 
     public readMesh(): RwMesh {
         const indexCount = this.readUint32();
