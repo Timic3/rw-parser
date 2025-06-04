@@ -29,7 +29,7 @@ export interface RwBone {
 export interface RwFrame {
     rotationMatrix: RwMatrix3,
     coordinatesOffset: RwVector3,
-    parentFrame: number,   
+    parentFrame: number,
 }
 
 export interface RwFrameList {
@@ -204,6 +204,10 @@ export class DffParser extends RwFile {
                 case RwSections.RwNodeName:
                     // For some reason, this frame is outside RwExtension.
                     dummies.push(this.readString(header.sectionSize));
+                    break;
+                case RwSections.RwAnim:
+                    // For III / VC models
+                    bones.push(this.readBones());
                     break;
                 default:
                     console.debug(`Section type ${header.sectionType} (${header.sectionType.toString(16)}) not found at offset (${this.getPosition().toString(16)}). Skipping ${header.sectionSize} bytes.`);
@@ -422,7 +426,6 @@ export class DffParser extends RwFile {
         };
     }
 
-
     public readSkin(vertexCount : number): RwSkin {                                                                                
         const boneCount = this.readUint8();
         const usedBoneCount = this.readUint8();
@@ -486,7 +489,7 @@ export class DffParser extends RwFile {
        }
        
        const bones : RwBone[] = [];
-       
+
        for(let i = 0; i < boneCount; i++) {
         const bone = {
             boneId: this.readInt32(), 
@@ -502,7 +505,6 @@ export class DffParser extends RwFile {
         bones,
        }
     }
-
 
     public readMesh(): RwMesh {
         const indexCount = this.readUint32();
