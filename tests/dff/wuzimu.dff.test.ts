@@ -1,9 +1,10 @@
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { DffParser, RwDff } from '../../src/index';
+import exp from 'node:constants';
 
 
-// This test for skin and bones only
+// This test for skin and bones sections
 describe('dff parsing - wuzimu', () => {
     const FLOATING_POINT_ERROR = 6;
     let rwDff: RwDff;
@@ -89,5 +90,124 @@ describe('dff parsing - wuzimu', () => {
             at: { x: 0, y: 0, z: 1} });
     });
 
+
+    test('bones - length', () => {
+        expect(rwDff.bones.length).toStrictEqual(32);
+        expect(rwDff.bones[0].bones!.length).toStrictEqual(32);
+    });
     
+    test('bones - ids', () => {
+        expect(rwDff.bones[0].boneId).toStrictEqual(0);
+        expect(rwDff.bones[1].boneId).toStrictEqual(1);
+        expect(rwDff.bones[2].boneId).toStrictEqual(51);
+        expect(rwDff.bones[3].boneId).toStrictEqual(41);
+        expect(rwDff.bones[15].boneId).toStrictEqual(8);
+        expect(rwDff.bones[30].boneId).toStrictEqual(53);
+        expect(rwDff.bones[31].boneId).toStrictEqual(54);
+
+        expect(rwDff.bones[0].bones![0].boneId).toStrictEqual(0);
+        expect(rwDff.bones[0].bones![2].boneId).toStrictEqual(2);
+        expect(rwDff.bones[0].bones![7].boneId).toStrictEqual(6);
+        expect(rwDff.bones[0].bones![18].boneId).toStrictEqual(24);
+        expect(rwDff.bones[0].bones![31].boneId).toStrictEqual(54);
+    });
+
+    test('bones - bone count', () => {
+        expect(rwDff.bones[0].boneCount).toStrictEqual(32);
+        expect(rwDff.bones[3].boneCount).toStrictEqual(0);
+        expect(rwDff.bones[15].boneCount).toStrictEqual(0);
+        expect(rwDff.bones[31].boneCount).toStrictEqual(0);
+;
+    });
+
+    test('skin - bone count', () => {
+        const skin = rwDff.geometryList?.geometries[0].skin!;
+
+        expect(skin.boneCount).toStrictEqual(32);
+        expect(skin.usedBoneCount).toStrictEqual(31);
+
+    });
+
+    test('skin - vertex weights', () => {
+        const skin = rwDff.geometryList?.geometries[0].skin!;
+        
+        expect(skin.maxWeightsPerVertex).toStrictEqual(4);
+        expect(skin.vertexWeights.length).toStrictEqual(990);
+
+        expect(skin.vertexWeights[0][0]).toBeCloseTo(0.5773563385009766,FLOATING_POINT_ERROR);
+        expect(skin.vertexWeights[0][1]).toBeCloseTo(0.42264366149902344,FLOATING_POINT_ERROR);
+        expect(skin.vertexWeights[0][2]).toBeCloseTo(0,FLOATING_POINT_ERROR);
+        expect(skin.vertexWeights[0][3]).toBeCloseTo(0,FLOATING_POINT_ERROR);
+
+        expect(skin.vertexWeights[654][0]).toBeCloseTo(1,FLOATING_POINT_ERROR);
+        expect(skin.vertexWeights[654][1]).toBeCloseTo(0,FLOATING_POINT_ERROR);
+        expect(skin.vertexWeights[654][2]).toBeCloseTo(0,FLOATING_POINT_ERROR);
+        expect(skin.vertexWeights[654][3]).toBeCloseTo(0,FLOATING_POINT_ERROR);
+
+        expect(skin.vertexWeights[989][0]).toBeCloseTo(1,FLOATING_POINT_ERROR);
+        expect(skin.vertexWeights[989][1]).toBeCloseTo(0,FLOATING_POINT_ERROR);
+        expect(skin.vertexWeights[989][2]).toBeCloseTo(0,FLOATING_POINT_ERROR);
+        expect(skin.vertexWeights[989][3]).toBeCloseTo(0,FLOATING_POINT_ERROR);
+    });
+
+    test('skin - bone-vertex map', () => {
+        const skin = rwDff.geometryList?.geometries[0].skin!;
+        
+        expect(skin.boneVertexIndices[0][0]).toStrictEqual(28);
+        expect(skin.boneVertexIndices[0][1]).toStrictEqual(24);
+        expect(skin.boneVertexIndices[0][2]).toStrictEqual(0);
+        expect(skin.boneVertexIndices[0][3]).toStrictEqual(0);
+
+        expect(skin.boneVertexIndices[525][0]).toStrictEqual(5);
+        expect(skin.boneVertexIndices[525][1]).toStrictEqual(6);
+        expect(skin.boneVertexIndices[525][2]).toStrictEqual(0);
+        expect(skin.boneVertexIndices[525][3]).toStrictEqual(0);
+
+        expect(skin.boneVertexIndices[989][0]).toStrictEqual(5);
+        expect(skin.boneVertexIndices[989][1]).toStrictEqual(0);
+        expect(skin.boneVertexIndices[989][2]).toStrictEqual(0);
+        expect(skin.boneVertexIndices[989][3]).toStrictEqual(0);
+    });
+
+    test('skin - inverse matrices', () => {
+        const skin = rwDff.geometryList?.geometries[0].skin!;
+        
+        expect(skin.inverseBoneMatrices.length).toStrictEqual(32);
+
+        expect(skin.inverseBoneMatrices[0][0]).toBeCloseTo(1, FLOATING_POINT_ERROR);
+        expect(skin.inverseBoneMatrices[0][1]).toBeCloseTo(0, FLOATING_POINT_ERROR);
+        expect(skin.inverseBoneMatrices[0][2]).toBeCloseTo(0, FLOATING_POINT_ERROR);
+        expect(skin.inverseBoneMatrices[0][3]).toBeCloseTo(0, FLOATING_POINT_ERROR);
+        expect(skin.inverseBoneMatrices[0][4]).toBeCloseTo(0, FLOATING_POINT_ERROR);
+        expect(skin.inverseBoneMatrices[0][5]).toBeCloseTo(1, FLOATING_POINT_ERROR);
+        expect(skin.inverseBoneMatrices[0][6]).toBeCloseTo(0, FLOATING_POINT_ERROR);
+        expect(skin.inverseBoneMatrices[0][7]).toBeCloseTo(0, FLOATING_POINT_ERROR);
+        expect(skin.inverseBoneMatrices[0][8]).toBeCloseTo(0, FLOATING_POINT_ERROR);
+        expect(skin.inverseBoneMatrices[0][9]).toBeCloseTo(0, FLOATING_POINT_ERROR);
+        expect(skin.inverseBoneMatrices[0][10]).toBeCloseTo(1, FLOATING_POINT_ERROR);
+        expect(skin.inverseBoneMatrices[0][11]).toBeCloseTo(1.8175872244174958e-20, FLOATING_POINT_ERROR);
+        expect(skin.inverseBoneMatrices[0][12]).toBeCloseTo(0, FLOATING_POINT_ERROR);
+        expect(skin.inverseBoneMatrices[0][13]).toBeCloseTo(0, FLOATING_POINT_ERROR);
+        expect(skin.inverseBoneMatrices[0][14]).toBeCloseTo(0, FLOATING_POINT_ERROR);
+        expect(skin.inverseBoneMatrices[0][15]).toBeCloseTo(1.485376372184306e-43, FLOATING_POINT_ERROR);
+
+        expect(skin.inverseBoneMatrices[31][0]).toBeCloseTo(1, FLOATING_POINT_ERROR);
+        expect(skin.inverseBoneMatrices[31][1]).toBeCloseTo(-9.176544324418501e-8, FLOATING_POINT_ERROR);
+        expect(skin.inverseBoneMatrices[31][2]).toBeCloseTo(-9.58358531422121e-11, FLOATING_POINT_ERROR);
+        expect(skin.inverseBoneMatrices[31][3]).toBeCloseTo(0, FLOATING_POINT_ERROR);
+        expect(skin.inverseBoneMatrices[31][4]).toBeCloseTo( -9.313955162681964e-10, FLOATING_POINT_ERROR);
+        expect(skin.inverseBoneMatrices[31][5]).toBeCloseTo(-1.2224200318655676e-8, FLOATING_POINT_ERROR);
+        expect(skin.inverseBoneMatrices[31][6]).toBeCloseTo(-1, FLOATING_POINT_ERROR);
+        expect(skin.inverseBoneMatrices[31][7]).toBeCloseTo(0, FLOATING_POINT_ERROR);
+        expect(skin.inverseBoneMatrices[31][8]).toBeCloseTo( 8.127337736141271e-8, FLOATING_POINT_ERROR);
+        expect(skin.inverseBoneMatrices[31][9]).toBeCloseTo(0.9999998807907104, FLOATING_POINT_ERROR);
+        expect(skin.inverseBoneMatrices[31][10]).toBeCloseTo(-5.962812021920172e-9, FLOATING_POINT_ERROR);
+        expect(skin.inverseBoneMatrices[31][11]).toBeCloseTo(1.8175872244174958e-20, FLOATING_POINT_ERROR);
+        expect(skin.inverseBoneMatrices[31][12]).toBeCloseTo( -0.15182293951511383, FLOATING_POINT_ERROR);
+        expect(skin.inverseBoneMatrices[31][13]).toBeCloseTo(1.0362001657485962, FLOATING_POINT_ERROR);
+        expect(skin.inverseBoneMatrices[31][14]).toBeCloseTo(-0.1699587106704712, FLOATING_POINT_ERROR);
+        expect(skin.inverseBoneMatrices[31][15]).toBeCloseTo(1.485376372184306e-43, FLOATING_POINT_ERROR);
+
+    });
+
 });
