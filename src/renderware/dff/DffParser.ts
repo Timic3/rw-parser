@@ -96,7 +96,7 @@ export interface RwSkin {
     maxWeightsPerVertex: number,
     boneVertexIndices: number[][],
     vertexWeights: number[][],
-    inverseBoneMatrices: number[][],
+    inverseBoneMatrices: RwMatrix4[],
 }
 
 export interface RwMesh {
@@ -109,6 +109,13 @@ export interface RwMatrix3 {
     right: RwVector3,
     up: RwVector3,
     at: RwVector3,
+}
+
+export interface RwMatrix4 {
+    right: RwVector4,
+    up: RwVector4,
+    at: RwVector4,
+    transform: RwVector4,
 }
 
 export interface RwColor {
@@ -127,6 +134,12 @@ export interface RwVector3 {
     x: number,
     y: number,
     z: number,
+}
+export interface RwVector4 {
+    x: number,
+    y: number,
+    z: number,
+    t: number,
 }
 
 export interface RwTextureCoordinate {
@@ -436,7 +449,7 @@ export class DffParser extends RwFile {
 
         const boneVertexIndices: number[][] = [];                  
         const vertexWeights: number[][] = [];     
-        const inverseBoneMatrices: number[][] = [];     
+        const inverseBoneMatrices: RwMatrix4[] = [];     
 
         for (let i = 0; i < vertexCount; i++) {
             const indices: number[] = [];
@@ -455,10 +468,13 @@ export class DffParser extends RwFile {
          }
 
         for (let i = 0; i < boneCount; i++) {
-            const matrix4x4: number[] = [];
-            for(let j = 0; j < 16; j++) {
-                matrix4x4.push(this.readFloat());
-            }
+            const matrix4x4: RwMatrix4 = {
+                right: { x: this.readFloat(), y: this.readFloat(), z: this.readFloat(), t: this.readFloat() },
+                up: { x: this.readFloat(), y: this.readFloat(), z: this.readFloat(), t: this.readFloat() },
+                at: { x: this.readFloat(), y: this.readFloat(), z: this.readFloat(), t: this.readFloat() },
+                transform: { x: this.readFloat(), y: this.readFloat(), z: this.readFloat(), t: this.readFloat() },
+            };
+            
             inverseBoneMatrices.push(matrix4x4);
          }
 
