@@ -90,33 +90,31 @@ describe('dff parsing - wuzimu', () => {
             at: { x: 0, y: 0, z: 1} });
     });
 
-
     test('bones - length', () => {
-        expect(rwDff.bones.length).toStrictEqual(32);
-        expect(rwDff.bones[0].bones!.length).toStrictEqual(32);
+        expect(rwDff.animNodes.length).toStrictEqual(32);
+        expect(rwDff.animNodes[0].bones.length).toStrictEqual(32);
     });
-    
-    test('bones - ids', () => {
-        expect(rwDff.bones[0].boneId).toStrictEqual(0);
-        expect(rwDff.bones[1].boneId).toStrictEqual(1);
-        expect(rwDff.bones[2].boneId).toStrictEqual(51);
-        expect(rwDff.bones[3].boneId).toStrictEqual(41);
-        expect(rwDff.bones[15].boneId).toStrictEqual(8);
-        expect(rwDff.bones[30].boneId).toStrictEqual(53);
-        expect(rwDff.bones[31].boneId).toStrictEqual(54);
 
-        expect(rwDff.bones[0].bones![0].boneId).toStrictEqual(0);
-        expect(rwDff.bones[0].bones![2].boneId).toStrictEqual(2);
-        expect(rwDff.bones[0].bones![7].boneId).toStrictEqual(6);
-        expect(rwDff.bones[0].bones![18].boneId).toStrictEqual(24);
-        expect(rwDff.bones[0].bones![31].boneId).toStrictEqual(54);
+    test('bones - ids', () => {
+        expect(rwDff.animNodes[0].boneId).toStrictEqual(0);
+        expect(rwDff.animNodes[1].boneId).toStrictEqual(1);
+        expect(rwDff.animNodes[2].boneId).toStrictEqual(51);
+        expect(rwDff.animNodes[3].boneId).toStrictEqual(41);
+        expect(rwDff.animNodes[15].boneId).toStrictEqual(8);
+        expect(rwDff.animNodes[30].boneId).toStrictEqual(53);
+        expect(rwDff.animNodes[31].boneId).toStrictEqual(54);
+        expect(rwDff.animNodes[0].bones[0].boneId).toStrictEqual(0);
+        expect(rwDff.animNodes[0].bones[2].boneId).toStrictEqual(2);
+        expect(rwDff.animNodes[0].bones[7].boneId).toStrictEqual(6);
+        expect(rwDff.animNodes[0].bones[18].boneId).toStrictEqual(24);
+        expect(rwDff.animNodes[0].bones[31].boneId).toStrictEqual(54);
     });
 
     test('bones - bone count', () => {
-        expect(rwDff.bones[0].boneCount).toStrictEqual(32);
-        expect(rwDff.bones[3].boneCount).toStrictEqual(0);
-        expect(rwDff.bones[15].boneCount).toStrictEqual(0);
-        expect(rwDff.bones[31].boneCount).toStrictEqual(0);
+        expect(rwDff.animNodes[0].bonesCount).toStrictEqual(32);
+        expect(rwDff.animNodes[3].bonesCount).toStrictEqual(0);
+        expect(rwDff.animNodes[15].bonesCount).toStrictEqual(0);
+        expect(rwDff.animNodes[31].bonesCount).toStrictEqual(0);
 ;
     });
 

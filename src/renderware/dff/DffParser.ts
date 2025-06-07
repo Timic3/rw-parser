@@ -10,7 +10,7 @@ export interface RwDff {
     frameList: RwFrameList | null,
     atomics: number[],
     dummies: string[],
-    bones: RwBone[],
+    animNodes: RwAnimNode[],
 }
 
 export interface RwClump {
@@ -19,12 +19,18 @@ export interface RwClump {
     cameraCount?: number,
 }
 
+export interface RwAnimNode {
+    boneId: number,
+    bonesCount: number,
+    bones: RwBone[],
+}
+
 export interface RwBone {
     boneId: number,
-    boneCount: number,
-    flags?: number,
-    bones?: RwBone[],
+    boneIndex: number,
+    flags: number,
 }
+
 
 export interface RwFrame {
     rotationMatrix: RwMatrix3,
@@ -168,7 +174,7 @@ export class DffParser extends RwFile {
         let versionNumber: number | undefined;
         let atomics: number[] = [];
         let dummies: string[] = [];
-        let bones: RwBone[] = [];
+        let animNodes: RwAnimNode[] = [];
         let geometryList: RwGeometryList | null = null;
         let frameList: RwFrameList | null = null;
 
@@ -199,7 +205,7 @@ export class DffParser extends RwFile {
                             dummies.push(this.readString(extensionHeader.sectionSize));
                             break;
                         case RwSections.RwAnim:
-                            bones.push(this.readBones());
+                            animNodes.push(this.readAnimNode());
                             break;
                         default:
                             console.debug(`Extension type ${extensionHeader.sectionType} (${extensionHeader.sectionType.toString(16)}) not found at offset (${this.getPosition().toString(16)}). Skipping ${extensionHeader.sectionSize} bytes.`);
@@ -220,7 +226,7 @@ export class DffParser extends RwFile {
                     break;
                 case RwSections.RwAnim:
                     // For III / VC models
-                    bones.push(this.readBones());
+                    animNodes.push(this.readAnimNode());
                     break;
                 default:
                     console.debug(`Section type ${header.sectionType} (${header.sectionType.toString(16)}) not found at offset (${this.getPosition().toString(16)}). Skipping ${header.sectionSize} bytes.`);
@@ -240,7 +246,7 @@ export class DffParser extends RwFile {
             frameList: frameList,
             atomics: atomics,
             dummies: dummies,
-            bones: bones,
+            animNodes: animNodes,
         };
     }
 
@@ -488,39 +494,32 @@ export class DffParser extends RwFile {
         }                                                           
     }
 
-    public readBones() {
-       this.skip(4);          // Skipping hAnimVersion property (0x100)
-       const boneId = this.readInt32();
-       const boneCount = this.readInt32();
+    public readAnimNode() :RwAnimNode {
+        this.skip(4);          // Skipping AnimVersion property (0x100)
+        const boneId = this.readInt32();
+        const boneCount = this.readInt32();
+        const bones :RwBone[] = [];
 
-       if(boneId == 0) {
-        this.skip(8);           // Skipping flags and keyFrameSize properties
-       }
-
-       if(boneCount == 0) {
-        return {
-            boneId,
-            boneCount,
+        if(boneId == 0) {
+            this.skip(8);           // Skipping flags and keyFrameSize properties
            }
-       }
-       
-       const bones : RwBone[] = [];
 
-       for(let i = 0; i < boneCount; i++) {
-        const bone = {
-            boneId: this.readInt32(), 
-            boneCount: this.readInt32(),
-            flags: this.readInt32(),
-        };
-        bones.push(bone);
-       }
+        if(boneCount > 0) {
+            for(let i = 0; i < boneCount; i++){
+                bones.push({
+                    boneId: this.readInt32(),
+                    boneIndex: this.readInt32(),
+                    flags: this.readInt32()
+                });
+            }
+        }
 
-       return {
-        boneId,
-        boneCount,
-        bones,
-       }
-    }
+        return {
+            boneId: boneId,
+            bonesCount: boneCount,
+            bones: bones
+        }
+    } 
 
     public readMesh(): RwMesh {
         const indexCount = this.readUint32();
