@@ -467,7 +467,7 @@ export class DffParser extends RwFile {
 
         for (let i = 0; i < vertexCount; i++) {
             const weights: number[] = [];
-            for(let j = 0; j < 4; j++) {
+            for (let j = 0; j < 4; j++) {
                 weights.push(this.readFloat());
             }
             vertexWeights.push(weights);
