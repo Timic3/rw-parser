@@ -459,7 +459,7 @@ export class DffParser extends RwFile {
 
         for (let i = 0; i < vertexCount; i++) {
             const indices: number[] = [];
-            for(let j = 0; j < 4; j++) {
+            for (let j = 0; j < 4; j++) {
                 indices.push(this.readUint8());
             }
             boneVertexIndices.push(indices);
