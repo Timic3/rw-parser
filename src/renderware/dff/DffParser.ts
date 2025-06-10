@@ -500,9 +500,9 @@ export class DffParser extends RwFile {
         const boneCount = this.readInt32();
         const bones :RwBone[] = [];
 
-        if(boneId == 0) {
+        if (boneId == 0) {
             this.skip(8);           // Skipping flags and keyFrameSize properties
-           }
+        }
 
         if (boneCount > 0) {
             for(let i = 0; i < boneCount; i++){
