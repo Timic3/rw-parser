@@ -505,7 +505,7 @@ export class DffParser extends RwFile {
         }
 
         if (boneCount > 0) {
-            for(let i = 0; i < boneCount; i++){
+            for (let i = 0; i < boneCount; i++){
                 bones.push({
                     boneId: this.readInt32(),
                     boneIndex: this.readInt32(),
