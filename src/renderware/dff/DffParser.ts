@@ -504,7 +504,7 @@ export class DffParser extends RwFile {
             this.skip(8);           // Skipping flags and keyFrameSize properties
            }
 
-        if(boneCount > 0) {
+        if (boneCount > 0) {
             for(let i = 0; i < boneCount; i++){
                 bones.push({
                     boneId: this.readInt32(),
