@@ -10,6 +10,7 @@ export interface RwDff {
     frameList: RwFrameList | null,
     atomics: number[],
     dummies: string[],
+    animNodes: RwAnimNode[],
 }
 
 export interface RwClump {
@@ -17,6 +18,19 @@ export interface RwClump {
     lightCount?: number,
     cameraCount?: number,
 }
+
+export interface RwAnimNode {
+    boneId: number,
+    bonesCount: number,
+    bones: RwBone[],
+}
+
+export interface RwBone {
+    boneId: number,
+    boneIndex: number,
+    flags: number,
+}
+
 
 export interface RwFrame {
     rotationMatrix: RwMatrix3,
@@ -63,6 +77,7 @@ export interface RwGeometry {
     boundingSphere?: RwSphere,
     materialList: RwMaterialList,
     binMesh: RwBinMesh,
+    skin?: RwSkin, 
 }
 
 export interface RwGeometryList {
@@ -81,6 +96,15 @@ export interface RwBinMesh {
     meshes: RwMesh[],
 }
 
+export interface RwSkin {
+    boneCount: number,
+    usedBoneCount: number,
+    maxWeightsPerVertex: number,
+    boneVertexIndices: number[][],
+    vertexWeights: number[][],
+    inverseBoneMatrices: RwMatrix4[],
+}
+
 export interface RwMesh {
     materialIndex: number,
     indexCount: number,
@@ -91,6 +115,13 @@ export interface RwMatrix3 {
     right: RwVector3,
     up: RwVector3,
     at: RwVector3,
+}
+
+export interface RwMatrix4 {
+    right: RwVector4,
+    up: RwVector4,
+    at: RwVector4,
+    transform: RwVector4,
 }
 
 export interface RwColor {
@@ -109,6 +140,12 @@ export interface RwVector3 {
     x: number,
     y: number,
     z: number,
+}
+export interface RwVector4 {
+    x: number,
+    y: number,
+    z: number,
+    t: number,
 }
 
 export interface RwTextureCoordinate {
@@ -137,6 +174,7 @@ export class DffParser extends RwFile {
         let versionNumber: number | undefined;
         let atomics: number[] = [];
         let dummies: string[] = [];
+        let animNodes: RwAnimNode[] = [];
         let geometryList: RwGeometryList | null = null;
         let frameList: RwFrameList | null = null;
 
@@ -166,6 +204,9 @@ export class DffParser extends RwFile {
                         case RwSections.RwNodeName:
                             dummies.push(this.readString(extensionHeader.sectionSize));
                             break;
+                        case RwSections.RwAnim:
+                            animNodes.push(this.readAnimNode());
+                            break;
                         default:
                             console.debug(`Extension type ${extensionHeader.sectionType} (${extensionHeader.sectionType.toString(16)}) not found at offset (${this.getPosition().toString(16)}). Skipping ${extensionHeader.sectionSize} bytes.`);
                             this.skip(extensionHeader.sectionSize);
@@ -182,6 +223,10 @@ export class DffParser extends RwFile {
                 case RwSections.RwNodeName:
                     // For some reason, this frame is outside RwExtension.
                     dummies.push(this.readString(header.sectionSize));
+                    break;
+                case RwSections.RwAnim:
+                    // For III / VC models
+                    animNodes.push(this.readAnimNode());
                     break;
                 default:
                     console.debug(`Section type ${header.sectionType} (${header.sectionType.toString(16)}) not found at offset (${this.getPosition().toString(16)}). Skipping ${header.sectionSize} bytes.`);
@@ -201,6 +246,7 @@ export class DffParser extends RwFile {
             frameList: frameList,
             atomics: atomics,
             dummies: dummies,
+            animNodes: animNodes,
         };
     }
 
@@ -350,10 +396,14 @@ export class DffParser extends RwFile {
         }
 
         let materialList = this.readMaterialList();
-
         let sectionSize = this.readSectionHeader().sectionSize;
         let position = this.getPosition();
         let binMesh = this.readBinMesh();
+        let skin = undefined;
+
+        if (this.readSectionHeader().sectionType == RwSections.RwSkin) {
+            skin = this.readSkin(vertexCount);
+        }
 
         this.setPosition(position + sectionSize);
 
@@ -369,6 +419,7 @@ export class DffParser extends RwFile {
             triangleInformation,
             materialList,
             binMesh,
+            skin, 
         };
     }
 
@@ -393,6 +444,82 @@ export class DffParser extends RwFile {
             meshCount, meshes
         };
     }
+
+    public readSkin(vertexCount : number): RwSkin {                                                                                
+        const boneCount = this.readUint8();
+        const usedBoneCount = this.readUint8();
+        const maxWeightsPerVertex = this.readUint8();
+
+        this.skip(1);               // Padding
+        this.skip(usedBoneCount);   // Skipping special indices
+
+        const boneVertexIndices: number[][] = [];                  
+        const vertexWeights: number[][] = [];     
+        const inverseBoneMatrices: RwMatrix4[] = [];     
+
+        for (let i = 0; i < vertexCount; i++) {
+            const indices: number[] = [];
+            for (let j = 0; j < 4; j++) {
+                indices.push(this.readUint8());
+            }
+            boneVertexIndices.push(indices);
+         }
+
+        for (let i = 0; i < vertexCount; i++) {
+            const weights: number[] = [];
+            for (let j = 0; j < 4; j++) {
+                weights.push(this.readFloat());
+            }
+            vertexWeights.push(weights);
+         }
+
+        for (let i = 0; i < boneCount; i++) {
+            const matrix4x4: RwMatrix4 = {
+                right: { x: this.readFloat(), y: this.readFloat(), z: this.readFloat(), t: this.readFloat() },
+                up: { x: this.readFloat(), y: this.readFloat(), z: this.readFloat(), t: this.readFloat() },
+                at: { x: this.readFloat(), y: this.readFloat(), z: this.readFloat(), t: this.readFloat() },
+                transform: { x: this.readFloat(), y: this.readFloat(), z: this.readFloat(), t: this.readFloat() },
+            };
+            
+            inverseBoneMatrices.push(matrix4x4);
+         }
+
+        return {
+            boneCount,
+            usedBoneCount,
+            maxWeightsPerVertex,
+            boneVertexIndices,
+            vertexWeights,
+            inverseBoneMatrices,
+        }                                                           
+    }
+
+    public readAnimNode() :RwAnimNode {
+        this.skip(4);          // Skipping AnimVersion property (0x100)
+        const boneId = this.readInt32();
+        const boneCount = this.readInt32();
+        const bones :RwBone[] = [];
+
+        if (boneId == 0) {
+            this.skip(8);           // Skipping flags and keyFrameSize properties
+        }
+
+        if (boneCount > 0) {
+            for (let i = 0; i < boneCount; i++){
+                bones.push({
+                    boneId: this.readInt32(),
+                    boneIndex: this.readInt32(),
+                    flags: this.readInt32()
+                });
+            }
+        }
+
+        return {
+            boneId: boneId,
+            bonesCount: boneCount,
+            bones: bones
+        }
+    } 
 
     public readMesh(): RwMesh {
         const indexCount = this.readUint32();
