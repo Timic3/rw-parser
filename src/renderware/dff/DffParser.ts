@@ -401,7 +401,7 @@ export class DffParser extends RwFile {
         let binMesh = this.readBinMesh();
         let skin = undefined;
 
-        if(this.readSectionHeader().sectionType == RwSections.RwSkin) {
+        if (this.readSectionHeader().sectionType == RwSections.RwSkin) {
             skin = this.readSkin(vertexCount);
         }
 
