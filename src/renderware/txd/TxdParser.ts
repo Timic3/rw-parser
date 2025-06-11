@@ -95,7 +95,7 @@ export class TxdParser extends RwFile {
         const mipmapCount = this.readUint8();
         const rasterType = this.readUint8();
 
-        const compressionFlags = this.readUint8(); //dxtType for III/VC
+        const compressionFlags = this.readUint8(); // Is "dxtType" for III/VC
 
         // SA
         const alpha = (compressionFlags & (1 << 0)) !== 0;

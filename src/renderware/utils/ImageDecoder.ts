@@ -149,7 +149,7 @@ export class ImageDecoder {
 						const control = bits & 3;
 						bits >>= 2;
 
-						let [r, g, b] = [0,0,0];
+						let [r, g, b] = [0, 0, 0];
 
 						switch (control) {
 							case 0:
@@ -253,7 +253,7 @@ export class ImageDecoder {
 						const control = bits & 3;
 						bits >>= 2;
 
-						let [r, g, b] = [0,0,0];
+						let [r, g, b] = [0, 0, 0];
 
 						switch (control) {
 							case 0:
