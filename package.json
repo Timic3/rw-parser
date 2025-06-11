@@ -19,9 +19,6 @@
   ],
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
-  "dependencies": {
-    "dxt-js": "0.0.3"
-  },
   "devDependencies": {
     "@types/jest": "^29.5.12",
     "@types/node": "^20.11.24",
