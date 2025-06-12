@@ -78,7 +78,7 @@ export class ImageDecoder {
 						const control = bits & 3;
 						bits >>= 2;
 
-						let [r, g, b, a] = [0,0,0,0];
+						let [r, g, b, a] = [0, 0, 0, 0];
 
 						switch (control) {
 							case 0:
@@ -116,7 +116,7 @@ export class ImageDecoder {
 						rgba[idx + 0] = r;
 						rgba[idx + 1] = g;
 						rgba[idx + 2] = b;
-						rgba[idx + 3] = 0xff;
+						rgba[idx + 3] = a;
 					}
 				}
 			}

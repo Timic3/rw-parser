@@ -110,7 +110,7 @@ export class TxdParser extends RwFile {
 
         let mipmaps: number[][] = [];
 
-        const palette: Uint8Array = (paletteType !== PaletteType.PALETTE_NONE ? this.readPalette(paletteType, depth) : new Uint8Array(0));
+        const palette = (paletteType !== PaletteType.PALETTE_NONE ? this.readPalette(paletteType, depth) : new Uint8Array(0));
 
         for (let i = 0; i < mipmapCount; i++) {
 
@@ -121,7 +121,7 @@ export class TxdParser extends RwFile {
                 // Raw RGBA presentation
                 let bitmap: number[];
 
-                if (0 !== palette.length) {
+                if (palette.length !== 0) {
                     const rasterFormatsWithoutAlpha = [
                         RasterFormat.RASTER_565,
                         RasterFormat.RASTER_LUM,
