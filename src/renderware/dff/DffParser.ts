@@ -305,7 +305,8 @@ export class DffParser extends RwFile {
         for (let i = 0; i < geometricObjectCount; i++) {
             this.readSectionHeader();
             this.readSectionHeader();
-            const geometryData = this.readGeometry(header.versionNumber);
+            const versionNumber = RwVersion.unpackVersion(header.versionNumber);
+            const geometryData = this.readGeometry(versionNumber);
             geometries.push(geometryData);
         }
 
