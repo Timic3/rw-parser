@@ -119,7 +119,8 @@ export class ImageDecoder {
 
 					if (color0 <= color1 && colorIdx === 3) {
 						rgba[idx + 3] = 0;
-					} else {
+					}
+					else {
 						rgba[idx + 3] = 255;
 					}
 				}
@@ -142,7 +143,7 @@ export class ImageDecoder {
 		+---+---+---+---+
 		| m | n | o | p |
 		+---+---+---+---+
-		|               | bc1 collor compression. 8byte
+		|               | bc1 color compression. 8byte
 		|   bc1 block   |
 		|               | total: 16byte in 4x4 colors
 		+---------------+
@@ -204,10 +205,6 @@ export class ImageDecoder {
 					const colorIdx = colorBits & 0x3;
 					colorBits >>>= 2;
 
-					rgba[idx + 0] = colorPalette[colorIdx * 4];
-					rgba[idx + 1] = colorPalette[colorIdx * 4 + 1];
-					rgba[idx + 2] = colorPalette[colorIdx * 4 + 2];
-
 					const bitPos = (j << 2) + i;
 					const byteIndex = bitPos >> 3;
 					const shift = (bitPos & 7) << 2;
@@ -215,14 +212,18 @@ export class ImageDecoder {
 					const alpha4 = ((byteIndex === 0 ? alpha0 : alpha1) >>> shift) & 0xF;
 					const alpha = alphaTable[alpha4];
 
+					rgba[idx + 0] = colorPalette[colorIdx * 4];
+					rgba[idx + 1] = colorPalette[colorIdx * 4 + 1];
+					rgba[idx + 2] = colorPalette[colorIdx * 4 + 2];
+					rgba[idx + 3] = alpha;
+
+
 					if (premultiplied && alpha > 0 && alpha < 255) {
 						const factor = 255 / alpha;
 						rgba[idx + 0] = Math.min(255, Math.round(rgba[idx + 0] * factor));
 						rgba[idx + 1] = Math.min(255, Math.round(rgba[idx + 1] * factor));
 						rgba[idx + 2] = Math.min(255, Math.round(rgba[idx + 2] * factor));
 					}
-
-					rgba[idx + 3] = alpha;
 				}
 			}
 		}
@@ -324,7 +325,8 @@ export class ImageDecoder {
 
 					if (shift <= 5) {
 						alphaIndices[k] = (alphaBits[byteOffset] >> shift) & 0x7;
-					} else {
+					}
+					else {
 						const part1 = (alphaBits[byteOffset] >> shift) & 0x7;
 						const part2 = (alphaBits[byteOffset + 1] << (8 - shift)) & 0x7;
 						alphaIndices[k] = part1 | part2;
