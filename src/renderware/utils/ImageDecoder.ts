@@ -15,10 +15,15 @@ export class ImageDecoder {
 	}
 
 	static decode565(bits: number): [number, number, number] {
-		const r = Math.round(((bits >> 11) & 0b11111)  * 255 / 31);
-		const g = Math.round(((bits >> 5)  & 0b111111) * 255 / 63);
-		const b = Math.round((bits         & 0b11111)  * 255 / 31);
-		return [r, g, b];
+		const r = (bits >> 11) & 0b11111;
+		const g = (bits >> 5)  & 0b111111;
+		const b = bits         & 0b11111;
+
+		return [
+			(r << 3) | (r >> 2),
+			(g << 2) | (g >> 4),
+			(b << 3) | (b >> 2)
+		];
 	}
 
 	static decode555(bits:number): [number, number, number] {
@@ -44,79 +49,78 @@ export class ImageDecoder {
 		return [a, r, g, b];
 	}
 
-	// Using if color0 > color1 on bcN
-	static color2Interpolation(color0:number, color1:number): number {
-		return (2 * color0 + color1) / 3;
-	}
+	/*
+		bc1 - block compression format, using for DXT1
+		compress 4x4 block of pixels
+		format:
+		+---------------+
+		|     color0    | color0 in palette. 16bit (RGB 565 format)
+		+---------------+
+		|     color1    | color1 in palette. 16bit (RGB 565 format)
+		+---+---+---+---+
+		| a | b | c | d | a-p color palette index 2bit * 16
+		+---+---+---+---+
+		| e | f | g | h |
+		+---+---+---+---+
+		| i | j | k | l |
+		+---+---+---+---+
+		| m | n | o | p | total: 8byte in 4x4 colors
+		+---+---+---+---+
 
-	// Using if color0 <= color1 on bcN
-	static color2Average(color0:number, color1:number): number {
-		return (color0 + color1) / 2;
-	}
-
-	// Using if color0 > color1 on bcN
-	static color3Interpolation(color0:number, color1:number): number {
-		return (2 * color1 + color0) / 3;
-	}
-
+		color2 and color3 in the palette are calculated by interpolating other colors or choosing the average between them.
+		color0 > color1 => interpolation, else => average
+	*/
 	static bc1(data: Uint8Array, width: number, height: number): Uint8Array {
 		const rgba = new Uint8Array(4 * width * height);
+		const colorPalette = new Uint8Array(16);
 		let offset = 0;
 
 		for (let y = 0; y < height; y += 4) {
 			for (let x = 0; x < width; x += 4) {
 				const color0 = ImageDecoder.readUInt16LE(data, offset);
 				const color1 = ImageDecoder.readUInt16LE(data, offset + 2);
-				let bits = ImageDecoder.readUInt32LE(data, offset + 4);
+				let colorBits = ImageDecoder.readUInt32LE(data, offset + 4);
 				offset += 8;
 
-				const [r0, g0, b0] = ImageDecoder.decode565(color0);
-				const [r1, g1, b1] = ImageDecoder.decode565(color1);
+				let [c0r, c0g, c0b] = ImageDecoder.decode565(color0);
+				let [c1r, c1g, c1b] = ImageDecoder.decode565(color1);
 
-				for (let j = 0; j < 4; j++) {
-					for (let i = 0; i < 4; i++) {
-						const control = bits & 3;
-						bits >>= 2;
+				if (color0 > color1) {
+					colorPalette[0] = c0r; colorPalette[1] = c0g; colorPalette[2] = c0b;
+					colorPalette[4] = c1r; colorPalette[5] = c1g; colorPalette[6] = c1b;
+					colorPalette[8] = (2 * c0r + c1r + 1) / 3;
+					colorPalette[9] = (2 * c0g + c1g + 1) / 3;
+					colorPalette[10] = (2 * c0b + c1b + 1) / 3;
+					colorPalette[12] = (c0r + 2 * c1r + 1) / 3;
+					colorPalette[13] = (c0g + 2 * c1g + 1) / 3;
+					colorPalette[14] = (c0b + 2 * c1b + 1) / 3;
+				}
+				else {
+					colorPalette[0] = c0r; colorPalette[1] = c0g; colorPalette[2] = c0b;
+					colorPalette[4] = c1r; colorPalette[5] = c1g; colorPalette[6] = c1b;
+					colorPalette[8] = (c0r + c1r + 1) >> 1;
+					colorPalette[9] = (c0g + c1g + 1) >> 1;
+					colorPalette[10] = (c0b + c1b + 1) >> 1;
+					colorPalette[12] = 0; colorPalette[13] = 0; colorPalette[14] = 0;
+				}
 
-						let [r, g, b, a] = [0, 0, 0, 0];
+				const baseIndex = (y * width + x) * 4;
+				for (let k = 0; k < 16; k++) {
+					const colorIdx = colorBits & 0x3;
+					colorBits >>>= 2;
 
-						switch (control) {
-							case 0:
-								[r, g, b, a] = [r0, g0, b0, 0xff];
-								break;
-							case 1:
-								[r, g, b, a] = [r1, g1, b1, 0xff];
-								break;
-							case 2:
-								if (color0 > color1) {
-									r = ImageDecoder.color2Interpolation(r0, r1);
-									g = ImageDecoder.color2Interpolation(g0, g1);
-									b = ImageDecoder.color2Interpolation(b0, b1);
-									a = 0xff;
-								} else {
-									r = ImageDecoder.color2Average(r0, r1);
-									g = ImageDecoder.color2Average(g0, g1);
-									b = ImageDecoder.color2Average(b0, b1);
-									a = 0xff;
-								}
-								break;
-							case 3:
-								if (color0 > color1) {
-									r = ImageDecoder.color3Interpolation(r0, r1);
-									g = ImageDecoder.color3Interpolation(g0, g1);
-									b = ImageDecoder.color3Interpolation(b0, b1);
-									a = 0xff;
-								} else {
-									[r, g, b, a] = [0, 0, 0, 0];
-								}
-								break;
-						}
+					const j = k >> 2;
+					const i = k & 3;
+					const idx = baseIndex + ((j * width + i) << 2);
 
-						const idx = 4 * ((y + j) * width + (x + i));
-						rgba[idx + 0] = r;
-						rgba[idx + 1] = g;
-						rgba[idx + 2] = b;
-						rgba[idx + 3] = a;
+					rgba[idx + 0] = colorPalette[colorIdx * 4];
+					rgba[idx + 1] = colorPalette[colorIdx * 4 + 1];
+					rgba[idx + 2] = colorPalette[colorIdx * 4 + 2];
+
+					if (color0 <= color1 && colorIdx === 3) {
+						rgba[idx + 3] = 0;
+					} else {
+						rgba[idx + 3] = 255;
 					}
 				}
 			}
@@ -125,76 +129,100 @@ export class ImageDecoder {
 		return rgba;
 	}
 
+	/*
+		bc2 - block compression format, using for DXT2 and DXT3
+		compress 4x4 block of pixels with 4x4 4bit alpha
+		format:
+		+---+---+---+---+
+		| a | b | c | d | a-p pixel alpha. 4bit * 16
+		+---+---+---+---+
+		| e | f | g | h |
+		+---+---+---+---+
+		| i | j | k | l |
+		+---+---+---+---+
+		| m | n | o | p |
+		+---+---+---+---+
+		|               | bc1 collor compression. 8byte
+		|   bc1 block   |
+		|               | total: 16byte in 4x4 colors
+		+---------------+
+
+		in DXT2, the color data is interpreted as being premultiplied by alpha
+	*/
 	static bc2(data: Uint8Array, width: number, height: number, premultiplied: boolean): Uint8Array {
 		const rgba = new Uint8Array(4 * width * height);
+		const colorPalette = new Uint8Array(16);
+
+		const alphaTable = new Uint8Array(16);
+		for (let i = 0; i < 16; i++) {
+			alphaTable[i] = (i * 255 + 7.5) / 15 | 0;
+		}
+
 		let offset = 0;
 
 		for (let y = 0; y < height; y += 4) {
 			for (let x = 0; x < width; x += 4) {
-				const alpha0 = ImageDecoder.readUInt16LE(data, offset);
-				const alpha1 = ImageDecoder.readUInt16LE(data, offset + 2);
-				const alpha2 = ImageDecoder.readUInt16LE(data, offset + 4);
-				const alpha3 = ImageDecoder.readUInt16LE(data, offset + 6);
-				const color0 = ImageDecoder.readUInt16LE(data, offset + 8);
-				const color1 = ImageDecoder.readUInt16LE(data, offset + 10);
-				let bits = ImageDecoder.readUInt32LE(data, offset + 12);
-				offset += 16;
+				const alpha0 = ImageDecoder.readUInt32LE(data, offset);
+				const alpha1 = ImageDecoder.readUInt32LE(data, offset + 4);
+				offset += 8;
 
-				const [r0, g0, b0] = ImageDecoder.decode565(color0);
-				const [r1, g1, b1] = ImageDecoder.decode565(color1);
-				const alphas = [alpha0, alpha1, alpha2, alpha3];
+				const color0 = ImageDecoder.readUInt16LE(data, offset);
+				const color1 = ImageDecoder.readUInt16LE(data, offset + 2);
+				let colorBits = ImageDecoder.readUInt32LE(data, offset + 4);
+				offset += 8;
 
-				for (let j = 0; j < 4; j++) {
-					for (let i = 0; i < 4; i++) {
-						const control = bits & 3;
-						bits >>= 2;
+				let [c0r, c0g, c0b] = ImageDecoder.decode565(color0);
+				let [c1r, c1g, c1b] = ImageDecoder.decode565(color1);
 
-						let [r, g, b] = [0, 0, 0];
+				if (color0 > color1) {
+					colorPalette[0] = c0r; colorPalette[1] = c0g; colorPalette[2] = c0b;
+					colorPalette[4] = c1r; colorPalette[5] = c1g; colorPalette[6] = c1b;
+					colorPalette[8] = (2 * c0r + c1r + 1) / 3;
+					colorPalette[9] = (2 * c0g + c1g + 1) / 3;
+					colorPalette[10] = (2 * c0b + c1b + 1) / 3;
+					colorPalette[12] = (c0r + 2 * c1r + 1) / 3;
+					colorPalette[13] = (c0g + 2 * c1g + 1) / 3;
+					colorPalette[14] = (c0b + 2 * c1b + 1) / 3;
+				}
+				else {
+					colorPalette[0] = c0r; colorPalette[1] = c0g; colorPalette[2] = c0b;
+					colorPalette[4] = c1r; colorPalette[5] = c1g; colorPalette[6] = c1b;
+					colorPalette[8] = (c0r + c1r + 1) >> 1;
+					colorPalette[9] = (c0g + c1g + 1) >> 1;
+					colorPalette[10] = (c0b + c1b + 1) >> 1;
+					colorPalette[12] = 0; colorPalette[13] = 0; colorPalette[14] = 0;
+				}
 
-						switch (control) {
-							case 0:
-								[r, g, b] = [r0, g0, b0];
-								break;
-							case 1:
-								[r, g, b] = [r1, g1, b1];
-								break;
-							case 2:
-								if (color0 > color1) {
-									r = ImageDecoder.color2Interpolation(r0, r1);
-									g = ImageDecoder.color2Interpolation(g0, g1);
-									b = ImageDecoder.color2Interpolation(b0, b1);
-								} else {
-									r = ImageDecoder.color2Average(r0, r1);
-									g = ImageDecoder.color2Average(g0, g1);
-									b = ImageDecoder.color2Average(b0, b1);
-								}
-								break;
-							case 3:
-								if (color0 > color1) {
-									r = ImageDecoder.color3Interpolation(r0, r1);
-									g = ImageDecoder.color3Interpolation(g0, g1);
-									b = ImageDecoder.color3Interpolation(b0, b1);
-								} else {
-									[r, g, b] = [0, 0, 0];
-								}
-								break;
-						}
+				const baseIndex = ((y * width + x) << 2);
 
-						const a = ((alphas[j] >> (i * 4)) & 0xf) * 0x11;
+				for (let k = 0; k < 16; k++) {
+					const j = k >> 2;
+					const i = k & 3;
 
-						const idx = 4 * ((y + j) * width + (x + i));
+					const idx = baseIndex + ((((j * width + i) << 2)));
 
-						if (premultiplied && a > 0) {
-							r = Math.min(Math.round((r * 255) / a), 255);
-							g = Math.min(Math.round((g * 255) / a), 255);
-							b = Math.min(Math.round((b * 255) / a), 255);
-						}
+					const colorIdx = colorBits & 0x3;
+					colorBits >>>= 2;
 
-						rgba[idx + 0] = r;
-						rgba[idx + 1] = g;
-						rgba[idx + 2] = b;
-						rgba[idx + 3] = a;
+					rgba[idx + 0] = colorPalette[colorIdx * 4];
+					rgba[idx + 1] = colorPalette[colorIdx * 4 + 1];
+					rgba[idx + 2] = colorPalette[colorIdx * 4 + 2];
+
+					const bitPos = (j << 2) + i;
+					const byteIndex = bitPos >> 3;
+					const shift = (bitPos & 7) << 2;
+
+					const alpha4 = ((byteIndex === 0 ? alpha0 : alpha1) >>> shift) & 0xF;
+					const alpha = alphaTable[alpha4];
+
+					if (premultiplied && alpha > 0 && alpha < 255) {
+						const factor = 255 / alpha;
+						rgba[idx + 0] = Math.min(255, Math.round(rgba[idx + 0] * factor));
+						rgba[idx + 1] = Math.min(255, Math.round(rgba[idx + 1] * factor));
+						rgba[idx + 2] = Math.min(255, Math.round(rgba[idx + 2] * factor));
 					}
+
+					rgba[idx + 3] = alpha;
 				}
 			}
 		}
@@ -202,114 +230,130 @@ export class ImageDecoder {
 		return rgba;
 	}
 
+	/*
+		bc3 - block compression format, using for DXT4 and DXT5
+		compress 4x4 block of pixels with alpha
+		format:
+		+---------------+
+		|     alpha0    | min alpha value. 8bit
+		+---------------+
+		|     alpha1    | max alpha value. 8bit
+		+---+---+---+---+
+		| a | b | c | d | bc1-like alpha block but 3bit * 16 (index in alpha palette)
+		+---+---+---+---+
+		| e | f | g | h |
+		+---+---+---+---+
+		| i | j | k | l |
+		+---+---+---+---+
+		| m | n | o | p |
+		+---+---+---+---+
+		|               | bc1 color compression. 8byte
+		|   bc1 block   |
+		|               | total: 16byte in 4x4 colors
+		+---------------+
+
+		in DXT4, the color data is interpreted as being premultiplied by alpha
+	*/
 	static bc3(data: Uint8Array, width: number, height: number, premultiplied: boolean): Uint8Array {
 		const rgba = new Uint8Array(4 * width * height);
+		const alphaPalette = new Uint8Array(8);
+		const colorPalette = new Uint8Array(16);
+		const alphaIndices = new Uint8Array(16);
 		let offset = 0;
 
 		for (let y = 0; y < height; y += 4) {
 			for (let x = 0; x < width; x += 4) {
-				const alpha0 = data[offset];
-				const alpha1 = data[offset + 1];
-				const alpha2 = ImageDecoder.readUInt16LE(data, offset + 2);
-				const alpha3 = ImageDecoder.readUInt16LE(data, offset + 4);
-				const alpha4 = ImageDecoder.readUInt16LE(data, offset + 6);
-				const color0 = ImageDecoder.readUInt16LE(data, offset + 8);
-				const color1 = ImageDecoder.readUInt16LE(data, offset + 10);
-				let bits = ImageDecoder.readUInt32LE(data, offset + 12);
-				offset += 16;
+				const alpha0 = data[offset++];
+				const alpha1 = data[offset++];
 
-				const [r0, g0, b0] = ImageDecoder.decode565(color0);
-				const [r1, g1, b1] = ImageDecoder.decode565(color1);
+				const alphaBits = data.subarray(offset, offset + 6);
+				offset += 6;
 
-				let alphas: number[];
-				if (alpha0 > alpha1) {
-					alphas = [
-						alpha0,
-						alpha1,
-						Math.round(alpha0 * (6 / 7) + alpha1 * (1 / 7)),
-						Math.round(alpha0 * (5 / 7) + alpha1 * (2 / 7)),
-						Math.round(alpha0 * (4 / 7) + alpha1 * (3 / 7)),
-						Math.round(alpha0 * (3 / 7) + alpha1 * (4 / 7)),
-						Math.round(alpha0 * (2 / 7) + alpha1 * (5 / 7)),
-						Math.round(alpha0 * (1 / 7) + alpha1 * (6 / 7))
-					];
-				} else {
-					alphas = [
-						alpha0,
-						alpha1,
-						Math.round(alpha0 * (4 / 5) + alpha1 * (1 / 5)),
-						Math.round(alpha0 * (3 / 5) + alpha1 * (2 / 5)),
-						Math.round(alpha0 * (2 / 5) + alpha1 * (3 / 5)),
-						Math.round(alpha0 * (1 / 5) + alpha1 * (4 / 5)),
-						0,
-						255
-					];
+				const color0 = ImageDecoder.readUInt16LE(data, offset);
+				const color1 = ImageDecoder.readUInt16LE(data, offset + 2);
+				let colorBits = ImageDecoder.readUInt32LE(data, offset + 4);
+				offset += 8;
+
+				let [c0r, c0g, c0b] = ImageDecoder.decode565(color0);
+				let [c1r, c1g, c1b] = ImageDecoder.decode565(color1);
+
+				if (color0 > color1) {
+					colorPalette[0] = c0r; colorPalette[1] = c0g; colorPalette[2] = c0b;
+					colorPalette[4] = c1r; colorPalette[5] = c1g; colorPalette[6] = c1b;
+					colorPalette[8] = (2 * c0r + c1r + 1) / 3;
+					colorPalette[9] = (2 * c0g + c1g + 1) / 3;
+					colorPalette[10] = (2 * c0b + c1b + 1) / 3;
+					colorPalette[12] = (c0r + 2 * c1r + 1) / 3;
+					colorPalette[13] = (c0g + 2 * c1g + 1) / 3;
+					colorPalette[14] = (c0b + 2 * c1b + 1) / 3;
+				}
+				else {
+					colorPalette[0] = c0r; colorPalette[1] = c0g; colorPalette[2] = c0b;
+					colorPalette[4] = c1r; colorPalette[5] = c1g; colorPalette[6] = c1b;
+					colorPalette[8] = (c0r + c1r + 1) >> 1;
+					colorPalette[9] = (c0g + c1g + 1) >> 1;
+					colorPalette[10] = (c0b + c1b + 1) >> 1;
+					colorPalette[12] = 0; colorPalette[13] = 0; colorPalette[14] = 0;
 				}
 
-				const alphaIndices = [alpha4, alpha3, alpha2];
+				if (alpha0 > alpha1) {
+					alphaPalette[0] = alpha0;
+					alphaPalette[1] = alpha1;
+					alphaPalette[2] = (alpha0 * 6 + alpha1 * 1 + 3) / 7;
+					alphaPalette[3] = (alpha0 * 5 + alpha1 * 2 + 3) / 7;
+					alphaPalette[4] = (alpha0 * 4 + alpha1 * 3 + 3) / 7;
+					alphaPalette[5] = (alpha0 * 3 + alpha1 * 4 + 3) / 7;
+					alphaPalette[6] = (alpha0 * 2 + alpha1 * 5 + 3) / 7;
+					alphaPalette[7] = (alpha0 * 1 + alpha1 * 6 + 3) / 7;
+				}
+				else {
+					alphaPalette[0] = alpha0;
+					alphaPalette[1] = alpha1;
+					alphaPalette[2] = (alpha0 * 4 + alpha1 * 1 + 2) / 5;
+					alphaPalette[3] = (alpha0 * 3 + alpha1 * 2 + 2) / 5;
+					alphaPalette[4] = (alpha0 * 2 + alpha1 * 3 + 2) / 5;
+					alphaPalette[5] = (alpha0 * 1 + alpha1 * 4 + 2) / 5;
+					alphaPalette[6] = 0;
+					alphaPalette[7] = 255;
+				}
 
-				for (let j = 0; j < 4; j++) {
-					for (let i = 0; i < 4; i++) {
-						const control = bits & 3;
-						bits >>= 2;
+				for (let k = 0; k < 16; k++) {
+					const bitOffset = k * 3;
+					const byteOffset = bitOffset >> 3;
+					const shift = bitOffset & 7;
 
-						let [r, g, b] = [0, 0, 0];
+					if (shift <= 5) {
+						alphaIndices[k] = (alphaBits[byteOffset] >> shift) & 0x7;
+					} else {
+						const part1 = (alphaBits[byteOffset] >> shift) & 0x7;
+						const part2 = (alphaBits[byteOffset + 1] << (8 - shift)) & 0x7;
+						alphaIndices[k] = part1 | part2;
+					}
+				}
 
-						switch (control) {
-							case 0:
-								[r, g, b] = [r0, g0, b0];
-								break;
-							case 1:
-								[r, g, b] = [r1, g1, b1];
-								break;
-							case 2:
-								if (color0 > color1) {
-									r = ImageDecoder.color2Interpolation(r0, r1);
-									g = ImageDecoder.color2Interpolation(g0, g1);
-									b = ImageDecoder.color2Interpolation(b0, b1);
-								} else {
-									r = ImageDecoder.color2Average(r0, r1);
-									g = ImageDecoder.color2Average(g0, g1);
-									b = ImageDecoder.color2Average(b0, b1);
-								}
-								break;
-							case 3:
-								if (color0 > color1) {
-									r = ImageDecoder.color3Interpolation(r0, r1);
-									g = ImageDecoder.color3Interpolation(g0, g1);
-									b = ImageDecoder.color3Interpolation(b0, b1);
-								} else {
-									[r, g, b] = [0, 0, 0];
-								}
-								break;
-						}
+				const baseIndex = (y * width + x) << 2;
+				let bits = colorBits;
 
-						const shift = 3 * (15 - ((3 - i) + j * 4));
-						const shiftS = shift % 16;
-						const rowS = Math.floor(shift / 16);
-						const rowE = Math.floor((shift + 2) / 16);
+				for (let k = 0; k < 16; k++) {
+					const j = k >> 2;
+					const i = k & 3;
 
-						let alphaIndex = (alphaIndices[2 - rowS] >> shiftS) & 0x7;
+					const idx = baseIndex + ((((j * width + i) << 2)));
+					const colorIdx = bits & 0x3;
+					bits >>>= 2;
 
-						if (rowS !== rowE) {
-							const shift_e = 16 - shiftS;
-							alphaIndex += (alphaIndices[2 - rowE] & ((1 << (3 - shift_e)) - 1)) << shift_e;
-						}
+					const alpha = alphaPalette[alphaIndices[k] & 0x7];
 
-						const a = alphas[alphaIndex];
+					rgba[idx + 0] = colorPalette[colorIdx * 4];
+					rgba[idx + 1] = colorPalette[colorIdx * 4 + 1];
+					rgba[idx + 2] = colorPalette[colorIdx * 4 + 2];
+					rgba[idx + 3] = alpha;
 
-						const idx = 4 * ((y + j) * width + (x + i));
-
-						if (premultiplied && a > 0) {
-							r = Math.min(Math.round((r * 255) / a), 255);
-							g = Math.min(Math.round((g * 255) / a), 255);
-							b = Math.min(Math.round((b * 255) / a), 255);
-						}
-
-						rgba[idx + 0] = r;
-						rgba[idx + 1] = g;
-						rgba[idx + 2] = b;
-						rgba[idx + 3] = a;
+					if (premultiplied && alpha > 0 && alpha < 255) {
+						const factor = 255 / alpha;
+						rgba[idx] = Math.min(255, Math.round(rgba[idx] * factor));
+						rgba[idx + 1] = Math.min(255, Math.round(rgba[idx + 1] * factor));
+						rgba[idx + 2] = Math.min(255, Math.round(rgba[idx + 2] * factor));
 					}
 				}
 			}
