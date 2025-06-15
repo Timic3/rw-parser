@@ -88,19 +88,19 @@ export class ImageDecoder {
 				if (color0 > color1) {
 					colorPalette[0] = c0r; colorPalette[1] = c0g; colorPalette[2] = c0b;
 					colorPalette[4] = c1r; colorPalette[5] = c1g; colorPalette[6] = c1b;
-					colorPalette[8] = (2 * c0r + c1r + 1) / 3;
-					colorPalette[9] = (2 * c0g + c1g + 1) / 3;
-					colorPalette[10] = (2 * c0b + c1b + 1) / 3;
-					colorPalette[12] = (c0r + 2 * c1r + 1) / 3;
-					colorPalette[13] = (c0g + 2 * c1g + 1) / 3;
-					colorPalette[14] = (c0b + 2 * c1b + 1) / 3;
+					colorPalette[8] = (2 * c0r + c1r) / 3;
+					colorPalette[9] = (2 * c0g + c1g) / 3;
+					colorPalette[10] = (2 * c0b + c1b) / 3;
+					colorPalette[12] = (c0r + 2 * c1r) / 3;
+					colorPalette[13] = (c0g + 2 * c1g) / 3;
+					colorPalette[14] = (c0b + 2 * c1b) / 3;
 				}
 				else {
 					colorPalette[0] = c0r; colorPalette[1] = c0g; colorPalette[2] = c0b;
 					colorPalette[4] = c1r; colorPalette[5] = c1g; colorPalette[6] = c1b;
-					colorPalette[8] = (c0r + c1r + 1) >> 1;
-					colorPalette[9] = (c0g + c1g + 1) >> 1;
-					colorPalette[10] = (c0b + c1b + 1) >> 1;
+					colorPalette[8] = (c0r + c1r) >> 1;
+					colorPalette[9] = (c0g + c1g) >> 1;
+					colorPalette[10] = (c0b + c1b) >> 1;
 					colorPalette[12] = 0; colorPalette[13] = 0; colorPalette[14] = 0;
 				}
 
@@ -178,19 +178,19 @@ export class ImageDecoder {
 				if (color0 > color1) {
 					colorPalette[0] = c0r; colorPalette[1] = c0g; colorPalette[2] = c0b;
 					colorPalette[4] = c1r; colorPalette[5] = c1g; colorPalette[6] = c1b;
-					colorPalette[8] = (2 * c0r + c1r + 1) / 3;
-					colorPalette[9] = (2 * c0g + c1g + 1) / 3;
-					colorPalette[10] = (2 * c0b + c1b + 1) / 3;
-					colorPalette[12] = (c0r + 2 * c1r + 1) / 3;
-					colorPalette[13] = (c0g + 2 * c1g + 1) / 3;
-					colorPalette[14] = (c0b + 2 * c1b + 1) / 3;
+					colorPalette[8] = (2 * c0r + c1r) / 3;
+					colorPalette[9] = (2 * c0g + c1g) / 3;
+					colorPalette[10] = (2 * c0b + c1b) / 3;
+					colorPalette[12] = (c0r + 2 * c1r) / 3;
+					colorPalette[13] = (c0g + 2 * c1g) / 3;
+					colorPalette[14] = (c0b + 2 * c1b) / 3;
 				}
 				else {
 					colorPalette[0] = c0r; colorPalette[1] = c0g; colorPalette[2] = c0b;
 					colorPalette[4] = c1r; colorPalette[5] = c1g; colorPalette[6] = c1b;
-					colorPalette[8] = (c0r + c1r + 1) >> 1;
-					colorPalette[9] = (c0g + c1g + 1) >> 1;
-					colorPalette[10] = (c0b + c1b + 1) >> 1;
+					colorPalette[8] = (c0r + c1r) >> 1;
+					colorPalette[9] = (c0g + c1g) >> 1;
+					colorPalette[10] = (c0b + c1b) >> 1;
 					colorPalette[12] = 0; colorPalette[13] = 0; colorPalette[14] = 0;
 				}
 
@@ -281,19 +281,19 @@ export class ImageDecoder {
 				if (color0 > color1) {
 					colorPalette[0] = c0r; colorPalette[1] = c0g; colorPalette[2] = c0b;
 					colorPalette[4] = c1r; colorPalette[5] = c1g; colorPalette[6] = c1b;
-					colorPalette[8] = (2 * c0r + c1r + 1) / 3;
-					colorPalette[9] = (2 * c0g + c1g + 1) / 3;
-					colorPalette[10] = (2 * c0b + c1b + 1) / 3;
-					colorPalette[12] = (c0r + 2 * c1r + 1) / 3;
-					colorPalette[13] = (c0g + 2 * c1g + 1) / 3;
-					colorPalette[14] = (c0b + 2 * c1b + 1) / 3;
+					colorPalette[8] = (2 * c0r + c1r) / 3;
+					colorPalette[9] = (2 * c0g + c1g) / 3;
+					colorPalette[10] = (2 * c0b + c1b) / 3;
+					colorPalette[12] = (c0r + 2 * c1r) / 3;
+					colorPalette[13] = (c0g + 2 * c1g) / 3;
+					colorPalette[14] = (c0b + 2 * c1b) / 3;
 				}
 				else {
 					colorPalette[0] = c0r; colorPalette[1] = c0g; colorPalette[2] = c0b;
 					colorPalette[4] = c1r; colorPalette[5] = c1g; colorPalette[6] = c1b;
-					colorPalette[8] = (c0r + c1r + 1) >> 1;
-					colorPalette[9] = (c0g + c1g + 1) >> 1;
-					colorPalette[10] = (c0b + c1b + 1) >> 1;
+					colorPalette[8] = (c0r + c1r) >> 1;
+					colorPalette[9] = (c0g + c1g) >> 1;
+					colorPalette[10] = (c0b + c1b) >> 1;
 					colorPalette[12] = 0; colorPalette[13] = 0; colorPalette[14] = 0;
 				}
 
