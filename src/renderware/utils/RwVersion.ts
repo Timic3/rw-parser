@@ -4,6 +4,7 @@
 export default class RwVersion {
     static readonly versions: { [versionNumber: number]: string } = {
         0x31000: 'RenderWare 3.1.0.0 (III on PS2)',
+        0x32000: 'RenderWare 3.2.0.0 (III on PC)',
         0x33002: 'RenderWare 3.3.0.2 (III on PC, VC on PS2)',
         0x34003: 'RenderWare 3.4.0.3 (VC on PC)',
         0x34005: 'RenderWare 3.4.0.5 (III on PS2, VC on Android/PC)',
