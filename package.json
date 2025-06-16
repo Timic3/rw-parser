@@ -1,6 +1,6 @@
 {
   "name": "rw-parser",
-  "version": "1.4.1",
+  "version": "1.5.0",
   "description": "Parses RenderWare DFF and TXD files into usable format!",
   "author": "Timic3 & Megadreams",
   "license": "GPL-3.0",
