@@ -12,22 +12,23 @@
   "keywords": [
     "gta",
     "gtasa",
+    "gtavc",
+    "gtaiii",
     "san andreas",
+    "vice city",
+    "iii",
     "renderware",
     "parser",
     "rw-parser"
   ],
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
-  "dependencies": {
-    "dxt-js": "0.0.3"
-  },
   "devDependencies": {
-    "@types/jest": "^29.5.12",
-    "@types/node": "^20.11.24",
-    "jest": "^29.7.0",
-    "ts-jest": "^29.1.2",
-    "typescript": "^5.3.3"
+    "@types/jest": "^30.0.0",
+    "@types/node": "^24.0.3",
+    "jest": "^30.0.0",
+    "ts-jest": "^29.4.0",
+    "typescript": "^5.8.3"
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
