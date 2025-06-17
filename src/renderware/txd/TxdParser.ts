@@ -1,11 +1,11 @@
 import { RwFile } from '../RwFile';
-import { ImageDecoder } from '../utils/ImageDecoder'
+import { ImageDecoder } from '../utils/ImageDecoder';
 import {
     D3DFormat,
     PaletteType,
     PlatformType,
     RasterFormat
-} from '../utils/ImageFormatEnums'
+} from '../utils/ImageFormatEnums';
 
 export interface RwTxd {
     textureDictionary: RwTextureDictionary,
