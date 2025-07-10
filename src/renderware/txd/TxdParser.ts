@@ -1,6 +1,11 @@
 import { RwFile } from '../RwFile';
-
-const dxt = require('dxt-js');
+import { ImageDecoder } from '../utils/ImageDecoder';
+import {
+    D3DFormat,
+    PaletteType,
+    PlatformType,
+    RasterFormat
+} from '../utils/ImageFormatEnums';
 
 export interface RwTxd {
     textureDictionary: RwTextureDictionary,
@@ -90,20 +95,22 @@ export class TxdParser extends RwFile {
         const mipmapCount = this.readUint8();
         const rasterType = this.readUint8();
 
-        const _isPAL4 = rasterType & 0x4000;
-        const _isPAL8 = rasterType & 0x2000;
+        const compressionFlags = this.readUint8(); // Is "dxtType" for III/VC
 
-        const compressionFlags = this.readUint8();
-
+        // SA
         const alpha = (compressionFlags & (1 << 0)) !== 0;
         const cubeTexture = (compressionFlags & (1 << 1)) !== 0;
         const autoMipMaps = (compressionFlags & (1 << 2)) !== 0;
         const compressed = (compressionFlags & (1 << 3)) !== 0;
 
+        const paletteType = (rasterFormat >> 13) & 0b11;
+
         let mipWidth = width;
         let mipHeight = height;
 
         let mipmaps: number[][] = [];
+
+        const palette = (paletteType !== PaletteType.PALETTE_NONE ? this.readPalette(paletteType, depth) : new Uint8Array(0));
 
         for (let i = 0; i < mipmapCount; i++) {
 
@@ -114,25 +121,26 @@ export class TxdParser extends RwFile {
                 // Raw RGBA presentation
                 let bitmap: number[];
 
-                if (compressed || d3dFormat.includes('DXT')) {
-                    bitmap = Array.from(dxt.decompress(raster, mipWidth, mipHeight, dxt.flags[d3dFormat]));
-                } else {
-                    // TODO: Make raster format an enum and add more formats
-                    // All formats are in D3D9 color order (BGRA), so we swap them
+                if (palette.length !== 0) {
+                    const rasterFormatsWithoutAlpha = [
+                        RasterFormat.RASTER_565,
+                        RasterFormat.RASTER_LUM,
+                        RasterFormat.RASTER_888,
+                        RasterFormat.RASTER_555
+                    ];
 
-                    switch (rasterFormat) {
-                        // FORMAT_8888, depth 32 (D3DFMT_A8R8G8B8)
-                        case 0x0500:
-                        // FORMAT_888 (RGB 8 bits each, D3DFMT_X8R8G8B8)
-                        case 0x0600:
-                            for (let i = 0; i < raster.length; i += 4) {
-                                // Fancy array destructuring, just swaps R and B values
-                                [raster[i], raster[i + 2]] = [raster[i + 2], raster[i]];
-                            }
-                            break;
-                    }
+                    const hasAlpha = ((platformId === PlatformType.D3D9 && alpha) || (platformId == PlatformType.D3D8 && !rasterFormatsWithoutAlpha.includes(rasterFormat)));
 
-                    bitmap = Array.from(raster);
+                    bitmap = Array.from(this.getBitmapWithPalette(paletteType, depth, hasAlpha, raster, palette, width, height));
+                }
+                else if (platformId === PlatformType.D3D8 && compressionFlags !== 0) {
+                    bitmap = Array.from(this.getBitmapWithDXT('DXT' + compressionFlags, raster, width, height));
+                }
+                else if (platformId === PlatformType.D3D9 && compressed) {
+                    bitmap = Array.from(this.getBitmapWithDXT(d3dFormat, raster, width, height));
+                }
+                else {
+                    bitmap = Array.from(this.getBitmapWithRasterFormat(rasterFormat, raster, width, height))
                 }
 
                 mipmaps.push(bitmap);
@@ -161,5 +169,66 @@ export class TxdParser extends RwFile {
             compressed,
             mipmaps,
         };
+    }
+
+    public readPalette(paletteType: number, depth: number): Uint8Array {
+        const size = (paletteType === PaletteType.PALETTE_8 ? 1024 : (depth === 4 ? 64 : 128))
+
+        return this.read(size);
+    }
+
+    public getBitmapWithPalette(paletteType: number, depth: number, hasAlpha: boolean, raster: Uint8Array, palette: Uint8Array, width: number, height: number): Uint8Array {
+        if (paletteType !== PaletteType.PALETTE_8 && depth == 4) {
+            return (hasAlpha
+                    ? ImageDecoder.pal4(raster, palette, width, height)
+                    : ImageDecoder.pal4NoAlpha(raster, palette, width, height)
+            );
+        }
+
+        return (hasAlpha
+                ? ImageDecoder.pal8(raster, palette, width, height)
+                : ImageDecoder.pal8NoAlpha(raster, palette, width, height)
+        )
+    }
+
+    public getBitmapWithDXT(dxtType:string, raster: Uint8Array, width: number, height: number): Uint8Array {
+        switch (dxtType) {
+            case D3DFormat.D3D_DXT1:
+                return ImageDecoder.bc1(raster, width, height);
+            case D3DFormat.D3D_DXT2:
+                return ImageDecoder.bc2(raster, width, height, true);
+            case D3DFormat.D3D_DXT3:
+                return ImageDecoder.bc2(raster, width, height, false);
+            case D3DFormat.D3D_DXT4:
+                return ImageDecoder.bc3(raster, width, height, true);
+            case D3DFormat.D3D_DXT5:
+                return ImageDecoder.bc3(raster, width, height, false);
+            // LUM8_A8 has compressed flag
+            case D3DFormat.D3DFMT_A8L8:
+                return ImageDecoder.lum8a8(raster, width, height);
+            default:
+                return new Uint8Array(0);
+        }
+    }
+
+    public getBitmapWithRasterFormat (rasterFormat: number, raster: Uint8Array, width: number, height: number): Uint8Array {
+        switch (rasterFormat) {
+            case RasterFormat.RASTER_1555:
+                return ImageDecoder.bgra1555(raster, width, height);
+            case RasterFormat.RASTER_565:
+                return ImageDecoder.bgra565(raster, width, height);
+            case RasterFormat.RASTER_4444:
+                return ImageDecoder.bgra4444(raster, width, height);
+            case RasterFormat.RASTER_LUM:
+                return ImageDecoder.lum8(raster, width, height);
+            case RasterFormat.RASTER_8888:
+                return ImageDecoder.bgra8888(raster, width, height);
+            case RasterFormat.RASTER_888:
+                return ImageDecoder.bgra888(raster, width, height);
+            case RasterFormat.RASTER_555:
+                return ImageDecoder.bgra555(raster, width, height);
+            default:
+                return new Uint8Array(0);
+        }
     }
 }
