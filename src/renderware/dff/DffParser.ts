@@ -2,8 +2,10 @@ import { RwFile } from '../RwFile';
 import { RwSections } from '../RwSections';
 import { RwParseStructureNotFoundError } from '../errors/RwParseError';
 import RwVersion from '../utils/RwVersion';
+import { DffModelType } from './DffModelType';
 
 export interface RwDff {
+    modelType: DffModelType,
     version: string,
     versionNumber: number,
     geometryList: RwGeometryList | null,
@@ -239,7 +241,15 @@ export class DffParser extends RwFile {
             throw new RwParseStructureNotFoundError('version');
         }
 
+        let modelType = DffModelType.GENERIC;
+        if (geometryList?.geometries.some(g => g.skin)) {
+            modelType = DffModelType.SKIN;
+        } else if (dummies.some(d => d.toLowerCase().includes('wheel') || d.toLowerCase().includes('chassis'))) {
+            modelType = DffModelType.VEHICLE;
+        }
+
         return {
+            modelType,
             version: version,
             versionNumber: versionNumber,
             geometryList: geometryList,
