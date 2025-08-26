@@ -4,3 +4,11 @@ node_modules
 output
 
 coverage
+
+#--------
+main.ts
+*.js
+timic/
+tests/
+.vscode/launch.json
+package.json
