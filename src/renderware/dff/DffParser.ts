@@ -273,26 +273,27 @@ export class DffParser extends RwFile {
         let frames: RwFrame[] = [];
 
         for (let i = 0; i < frameCount; i++) {
-            // All these could probably be moved to readFrameData()
-
-            const rotationMatrix: RwMatrix3 = {
-                right: { x: this.readFloat(), y: this.readFloat(), z: this.readFloat() },
-                up: { x: this.readFloat(), y: this.readFloat(), z: this.readFloat() },
-                at: { x: this.readFloat(), y: this.readFloat(), z: this.readFloat() },
-            }
-
-            const coordinatesOffset: RwVector3 = { x: this.readFloat(), y: this.readFloat(), z: this.readFloat() };
-
-            const parentFrame = this.readInt32();
-
-            // Skip matrix creation internal flags
-            // They are read by the game but are not used
-            this.skip(4);
-
-            frames.push({ rotationMatrix, coordinatesOffset, parentFrame });
+            frames.push(this.readFrameData());
         }
 
         return { frameCount, frames };
+    }
+    public readFrameData(): RwFrame {
+        const rotationMatrix: RwMatrix3 = {
+            right: { x: this.readFloat(), y: this.readFloat(), z: this.readFloat() },
+            up: { x: this.readFloat(), y: this.readFloat(), z: this.readFloat() },
+            at: { x: this.readFloat(), y: this.readFloat(), z: this.readFloat() },
+        }
+
+        const coordinatesOffset: RwVector3 = { x: this.readFloat(), y: this.readFloat(), z: this.readFloat() };
+
+        const parentFrame = this.readInt32();
+
+        // Skip matrix creation internal flags
+        // They are read by the game but are not used
+        this.skip(4);
+
+        return { rotationMatrix, coordinatesOffset, parentFrame };
     }
 
     public readGeometryList(): RwGeometryList {
