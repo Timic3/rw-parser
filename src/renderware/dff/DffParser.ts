@@ -6,17 +6,18 @@ import RwVersion from '../utils/RwVersion';
 export interface RwDff {
     version: string,
     versionNumber: number,
-    geometryList: RwGeometryList | null,
-    frameList: RwFrameList | null,
-    atomics: number[],
-    dummies: string[],
-    animNodes: RwAnimNode[],
+    clumps: RwClump[],
 }
 
 export interface RwClump {
     atomicCount: number,
     lightCount?: number,
     cameraCount?: number,
+    geometryList: RwGeometryList | null,
+    frameList: RwFrameList | null,
+    atomics: RwAtomic[] | null,
+    dummies: string[],
+    animNodes: RwAnimNode[],
 }
 
 export interface RwAnimNode {
@@ -30,7 +31,6 @@ export interface RwBone {
     boneIndex: number,
     flags: number,
 }
-
 
 export interface RwFrame {
     rotationMatrix: RwMatrix3,
@@ -77,7 +77,7 @@ export interface RwGeometry {
     boundingSphere?: RwSphere,
     materialList: RwMaterialList,
     binMesh: RwBinMesh,
-    skin?: RwSkin, 
+    skin?: RwSkin,
 }
 
 export interface RwGeometryList {
@@ -141,6 +141,7 @@ export interface RwVector3 {
     y: number,
     z: number,
 }
+
 export interface RwVector4 {
     x: number,
     y: number,
@@ -172,11 +173,7 @@ export class DffParser extends RwFile {
     parse(): RwDff {
         let version: string | undefined;
         let versionNumber: number | undefined;
-        let atomics: number[] = [];
-        let dummies: string[] = [];
-        let animNodes: RwAnimNode[] = [];
-        let geometryList: RwGeometryList | null = null;
-        let frameList: RwFrameList | null = null;
+        let clumps: RwClump[] = [];
 
         while (this.getPosition() < this.getSize()) {
             const header = this.readSectionHeader();
@@ -188,13 +185,61 @@ export class DffParser extends RwFile {
             if (header.sectionSize == 0) {
                 continue;
             }
+            versionNumber = RwVersion.unpackVersion(header.versionNumber);
+            version = RwVersion.versions[versionNumber];
 
             switch (header.sectionType) {
                 case RwSections.RwClump:
-                    // Multiple clumps are used in SA player models, so we should eventually support it
-                    versionNumber = RwVersion.unpackVersion(header.versionNumber);
-                    version = RwVersion.versions[versionNumber];
+                    clumps.push(this.readClump(header.sectionSize));
                     break;
+                default:
+                    console.debug(`Section type ${header.sectionType} (${header.sectionType.toString(16)}) not found at offset (${this.getPosition().toString(16)}). Skipping ${header.sectionSize} bytes.`);
+                    this.skip(header.sectionSize);
+                    break;
+            }
+        }
+
+        if (!version || !versionNumber) {
+            throw new RwParseStructureNotFoundError('version');
+        }
+
+        return {
+            version: version,
+            versionNumber: versionNumber,
+            clumps: clumps,
+        };
+    }
+
+    public readClump(clumpSize: number): RwClump {
+        const { versionNumber } = this.readSectionHeader();
+        let atomics: RwAtomic[] = [];
+        let dummies: string[] = [];
+        let geometryList: RwGeometryList | null = null;
+        let frameList: RwFrameList | null = null;
+        let animNodes: RwAnimNode[] = [];
+
+        const atomicCount = this.readUint32();
+
+        let lightCount;
+        let cameraCount;
+        if (versionNumber > 0x33000) {
+            lightCount = this.readUint32();
+            cameraCount = this.readUint32();
+        }
+        const startPosition = this.getPosition();
+
+           while (this.getPosition() - startPosition < clumpSize - 24) {
+            const header = this.readSectionHeader();
+
+            if (header.sectionType === 0) {
+                break;
+            }
+
+            if (header.sectionSize == 0) {
+                continue;
+            }
+
+            switch (header.sectionType) {
                 case RwSections.RwFrameList:
                     frameList = this.readFrameList();
                     break;
@@ -217,8 +262,7 @@ export class DffParser extends RwFile {
                     geometryList = this.readGeometryList();
                     break;
                 case RwSections.RwAtomic:
-                    const atomic = this.readAtomic();
-                    atomics[atomic.geometryIndex] = atomic.frameIndex;
+                    atomics.push(this.readAtomic());
                     break;
                 case RwSections.RwNodeName:
                     // For some reason, this frame is outside RwExtension.
@@ -228,6 +272,8 @@ export class DffParser extends RwFile {
                     // For III / VC models
                     animNodes.push(this.readAnimNode());
                     break;
+                case RwSections.RwClump:
+                    break;    
                 default:
                     console.debug(`Section type ${header.sectionType} (${header.sectionType.toString(16)}) not found at offset (${this.getPosition().toString(16)}). Skipping ${header.sectionSize} bytes.`);
                     this.skip(header.sectionSize);
@@ -235,34 +281,16 @@ export class DffParser extends RwFile {
             }
         }
 
-        if (!version || !versionNumber) {
-            throw new RwParseStructureNotFoundError('version');
-        }
-
-        return {
-            version: version,
-            versionNumber: versionNumber,
-            geometryList: geometryList,
-            frameList: frameList,
-            atomics: atomics,
-            dummies: dummies,
-            animNodes: animNodes,
-        };
-    }
-
-    public readClump(): RwClump {
-        const { versionNumber } = this.readSectionHeader();
-
-        const atomicCount = this.readUint32();
-
-        let lightCount;
-        let cameraCount;
-        if (versionNumber > 0x33000) {
-            lightCount = this.readUint32();
-            cameraCount = this.readUint32();
-        }
-
-        return { atomicCount, lightCount, cameraCount };
+        return { 
+            atomicCount, 
+            lightCount, 
+            cameraCount,
+            geometryList,
+            frameList,
+            atomics,
+            dummies,
+            animNodes,
+             };
     }
 
     public readFrameList(): RwFrameList {
@@ -278,6 +306,7 @@ export class DffParser extends RwFile {
 
         return { frameCount, frames };
     }
+
     public readFrameData(): RwFrame {
         const rotationMatrix: RwMatrix3 = {
             right: { x: this.readFloat(), y: this.readFloat(), z: this.readFloat() },
@@ -306,8 +335,7 @@ export class DffParser extends RwFile {
         for (let i = 0; i < geometricObjectCount; i++) {
             this.readSectionHeader();
             this.readSectionHeader();
-            const versionNumber = RwVersion.unpackVersion(header.versionNumber);
-            const geometryData = this.readGeometry(versionNumber);
+            const geometryData = this.readGeometry(header.versionNumber);
             geometries.push(geometryData);
         }
 
