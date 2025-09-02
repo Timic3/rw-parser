@@ -76,7 +76,7 @@ export interface RwGeometry {
     normalInformation: RwVector3[],
     boundingSphere?: RwSphere,
     materialList: RwMaterialList,
-    binMesh: RwBinMesh,
+    binMesh?: RwBinMesh,
     skin?: RwSkin,
 }
 
@@ -327,7 +327,6 @@ export class DffParser extends RwFile {
 
     public readGeometryList(): RwGeometryList {
         const header = this.readSectionHeader();
-
         const geometricObjectCount = this.readUint32();
 
         let geometries: RwGeometry[] = [];
@@ -425,11 +424,21 @@ export class DffParser extends RwFile {
             }
         }
 
+        const skipCount = 3 * 2 * vertexCount;
+        if (_shouldModulateMaterialColor) {      // DEBUG
+            for (let i = 0; i < skipCount; i++) {
+                this.readFloat();
+            }
+        }
         let materialList = this.readMaterialList();
         let sectionSize = this.readSectionHeader().sectionSize;
         let position = this.getPosition();
-        let binMesh = this.readBinMesh();
-        let skin = undefined;
+        let binMesh = undefined;
+        let skin = undefined;        
+
+        if (this.readSectionHeader().sectionType == RwSections.RwBinMesh) {
+            binMesh = this.readBinMesh();
+        }
 
         if (this.readSectionHeader().sectionType == RwSections.RwSkin) {
             skin = this.readSkin(vertexCount);
