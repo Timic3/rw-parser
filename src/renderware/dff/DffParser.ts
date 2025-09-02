@@ -333,7 +333,6 @@ export class DffParser extends RwFile {
 
         for (let i = 0; i < geometricObjectCount; i++) {
             this.readSectionHeader();
-            this.readSectionHeader();
             const geometryData = this.readGeometry(header.versionNumber);
             geometries.push(geometryData);
         }
@@ -342,6 +341,9 @@ export class DffParser extends RwFile {
     }
 
     public readGeometry(versionNumber: number): RwGeometry {
+        let sectionSize = this.readSectionHeader().sectionSize;
+        let position = this.getPosition();
+
         const flags = this.readUint16();
         const textureCoordinatesCount = this.readUint8();
         const _nativeGeometryFlags = this.readUint8();
@@ -424,15 +426,13 @@ export class DffParser extends RwFile {
             }
         }
 
-        const skipCount = 3 * 2 * vertexCount;
-        if (_shouldModulateMaterialColor) {      // DEBUG
-            for (let i = 0; i < skipCount; i++) {
-                this.readFloat();
-            }
-        }
+        this.setPosition(position + sectionSize);
+
         let materialList = this.readMaterialList();
-        let sectionSize = this.readSectionHeader().sectionSize;
-        let position = this.getPosition();
+
+        sectionSize = this.readSectionHeader().sectionSize;
+        position = this.getPosition();
+
         let binMesh = undefined;
         let skin = undefined;        
 
