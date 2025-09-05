@@ -434,14 +434,25 @@ export class DffParser extends RwFile {
         position = this.getPosition();
 
         let binMesh = undefined;
-        let skin = undefined;        
+        let skin = undefined;
 
-        if (this.readSectionHeader().sectionType == RwSections.RwBinMesh) {
-            binMesh = this.readBinMesh();
-        }
-
-        if (this.readSectionHeader().sectionType == RwSections.RwSkin) {
-            skin = this.readSkin(vertexCount);
+        let relativePosition = 0;
+        while (relativePosition < sectionSize) {
+            const header = this.readSectionHeader();
+            relativePosition += header.sectionSize + 12;
+            
+            switch(header.sectionType) {
+                case RwSections.RwBinMesh: 
+                    binMesh = this.readBinMesh();
+                    break;   
+                case RwSections.RwSkin: 
+                    skin = this.readSkin(vertexCount);
+                    break;
+                default:
+                    console.debug(`Section type ${header.sectionType} (${header.sectionType.toString(16)}) not found at offset (${this.getPosition().toString(16)}). Skipping ${header.sectionSize} bytes.`);
+                    this.skip(header.sectionSize);
+                    break;
+            }            
         }
 
         this.setPosition(position + sectionSize);
@@ -463,8 +474,6 @@ export class DffParser extends RwFile {
     }
 
     public readBinMesh(): RwBinMesh {
-        this.readSectionHeader();
-
         // Flags (0: triangle list, 1: triangle strip)
         this.skip(4);
 
