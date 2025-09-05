@@ -25,20 +25,20 @@ describe('dff parsing - wuzimu', () => {
     });
 
     test('dummies - length', () => {
-        expect(rwDff.dummies).toHaveLength(32);
+        expect(rwDff.clumps[0].dummies).toHaveLength(32);
     });
 
     test('dummies - names', () => {
-        expect(rwDff.dummies[0]).toBe('Normal');
-        expect(rwDff.dummies[1]).toBe(' Pelvis');
-        expect(rwDff.dummies[2]).toBe(' R Thigh');   
-        expect(rwDff.dummies[15]).toBe('Jaw');
-        expect(rwDff.dummies[30]).toBe(' R Foot');
-        expect(rwDff.dummies[31]).toBe(' R Toe0');
+        expect(rwDff.clumps[0].dummies[0]).toBe('Normal');
+        expect(rwDff.clumps[0].dummies[1]).toBe(' Pelvis');
+        expect(rwDff.clumps[0].dummies[2]).toBe(' R Thigh');   
+        expect(rwDff.clumps[0].dummies[15]).toBe('Jaw');
+        expect(rwDff.clumps[0].dummies[30]).toBe(' R Foot');
+        expect(rwDff.clumps[0].dummies[31]).toBe(' R Toe0');
     })
 
     test('frames - length', () => {
-        const frameList = rwDff.frameList;
+        const frameList = rwDff.clumps[0].frameList;
 
         expect(frameList).toBeDefined();
         expect(frameList!.frameCount).toBe(33);
@@ -46,7 +46,7 @@ describe('dff parsing - wuzimu', () => {
     });
 
     test('frames - parent frames', () => {
-        const frameList = rwDff.frameList;
+        const frameList = rwDff.clumps[0].frameList;
 
         expect(frameList!.frames[0].parentFrame).toBe(-1);
         expect(frameList!.frames[1].parentFrame).toBe(0);
@@ -59,7 +59,7 @@ describe('dff parsing - wuzimu', () => {
     });
 
     test('frames - coordinate offsets', () => {
-        const frameList = rwDff.frameList;
+        const frameList = rwDff.clumps[0].frameList;
 
         expect(frameList!.frames[0].coordinatesOffset).toStrictEqual({ x: 0, y: 0, z: 0 });
         expect(frameList!.frames[1].coordinatesOffset).toStrictEqual({ x: 0, y: 0, z: 0 });
@@ -74,7 +74,7 @@ describe('dff parsing - wuzimu', () => {
     });
 
     test('frames - rotation matrices', () => {
-        const frameList = rwDff.frameList;
+        const frameList = rwDff.clumps[0].frameList;
 
         expect(frameList!.frames[0].rotationMatrix).toStrictEqual({ 
             right: { x: 1, y: 0, z: 0 }, 
@@ -91,35 +91,35 @@ describe('dff parsing - wuzimu', () => {
     });
 
     test('bones - length', () => {
-        expect(rwDff.animNodes.length).toStrictEqual(32);
-        expect(rwDff.animNodes[0].bones.length).toStrictEqual(32);
+        expect(rwDff.clumps[0].animNodes.length).toStrictEqual(32);
+        expect(rwDff.clumps[0].animNodes[0].bones.length).toStrictEqual(32);
     });
 
     test('bones - ids', () => {
-        expect(rwDff.animNodes[0].boneId).toStrictEqual(0);
-        expect(rwDff.animNodes[1].boneId).toStrictEqual(1);
-        expect(rwDff.animNodes[2].boneId).toStrictEqual(51);
-        expect(rwDff.animNodes[3].boneId).toStrictEqual(41);
-        expect(rwDff.animNodes[15].boneId).toStrictEqual(8);
-        expect(rwDff.animNodes[30].boneId).toStrictEqual(53);
-        expect(rwDff.animNodes[31].boneId).toStrictEqual(54);
-        expect(rwDff.animNodes[0].bones[0].boneId).toStrictEqual(0);
-        expect(rwDff.animNodes[0].bones[2].boneId).toStrictEqual(2);
-        expect(rwDff.animNodes[0].bones[7].boneId).toStrictEqual(6);
-        expect(rwDff.animNodes[0].bones[18].boneId).toStrictEqual(24);
-        expect(rwDff.animNodes[0].bones[31].boneId).toStrictEqual(54);
+        expect(rwDff.clumps[0].animNodes[0].boneId).toStrictEqual(0);
+        expect(rwDff.clumps[0].animNodes[1].boneId).toStrictEqual(1);
+        expect(rwDff.clumps[0].animNodes[2].boneId).toStrictEqual(51);
+        expect(rwDff.clumps[0].animNodes[3].boneId).toStrictEqual(41);
+        expect(rwDff.clumps[0].animNodes[15].boneId).toStrictEqual(8);
+        expect(rwDff.clumps[0].animNodes[30].boneId).toStrictEqual(53);
+        expect(rwDff.clumps[0].animNodes[31].boneId).toStrictEqual(54);
+        expect(rwDff.clumps[0].animNodes[0].bones[0].boneId).toStrictEqual(0);
+        expect(rwDff.clumps[0].animNodes[0].bones[2].boneId).toStrictEqual(2);
+        expect(rwDff.clumps[0].animNodes[0].bones[7].boneId).toStrictEqual(6);
+        expect(rwDff.clumps[0].animNodes[0].bones[18].boneId).toStrictEqual(24);
+        expect(rwDff.clumps[0].animNodes[0].bones[31].boneId).toStrictEqual(54);
     });
 
     test('bones - bone count', () => {
-        expect(rwDff.animNodes[0].bonesCount).toStrictEqual(32);
-        expect(rwDff.animNodes[3].bonesCount).toStrictEqual(0);
-        expect(rwDff.animNodes[15].bonesCount).toStrictEqual(0);
-        expect(rwDff.animNodes[31].bonesCount).toStrictEqual(0);
+        expect(rwDff.clumps[0].animNodes[0].bonesCount).toStrictEqual(32);
+        expect(rwDff.clumps[0].animNodes[3].bonesCount).toStrictEqual(0);
+        expect(rwDff.clumps[0].animNodes[15].bonesCount).toStrictEqual(0);
+        expect(rwDff.clumps[0].animNodes[31].bonesCount).toStrictEqual(0);
 ;
     });
 
     test('skin - bone count', () => {
-        const skin = rwDff.geometryList?.geometries[0].skin!;
+        const skin = rwDff.clumps[0].geometryList.geometries[0].skin!;
 
         expect(skin.boneCount).toStrictEqual(32);
         expect(skin.usedBoneCount).toStrictEqual(31);
@@ -127,7 +127,7 @@ describe('dff parsing - wuzimu', () => {
     });
 
     test('skin - vertex weights', () => {
-        const skin = rwDff.geometryList?.geometries[0].skin!;
+        const skin = rwDff.clumps[0].geometryList.geometries[0].skin!;
         
         expect(skin.maxWeightsPerVertex).toStrictEqual(4);
         expect(skin.vertexWeights.length).toStrictEqual(990);
@@ -149,7 +149,7 @@ describe('dff parsing - wuzimu', () => {
     });
 
     test('skin - bone-vertex map', () => {
-        const skin = rwDff.geometryList?.geometries[0].skin!;
+        const skin = rwDff.clumps[0].geometryList.geometries[0].skin!;
         
         expect(skin.boneVertexIndices[0][0]).toStrictEqual(28);
         expect(skin.boneVertexIndices[0][1]).toStrictEqual(24);
@@ -168,7 +168,7 @@ describe('dff parsing - wuzimu', () => {
     });
 
     test('skin - inverse bone matrices', () => {
-        const skin = rwDff.geometryList?.geometries[0].skin!;
+        const skin = rwDff.clumps[0].geometryList.geometries[0].skin!;
         
         expect(skin.inverseBoneMatrices.length).toStrictEqual(32);
 
