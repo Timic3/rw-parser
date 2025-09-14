@@ -440,19 +440,21 @@ export class DffParser extends RwFile {
         while (relativePosition < sectionSize) {
             const header = this.readSectionHeader();
             relativePosition += header.sectionSize + 12;
+            const currentPosition = this.getPosition() + header.sectionSize;
             
             switch(header.sectionType) {
-                case RwSections.RwBinMesh: 
-                    binMesh = this.readBinMesh();
-                    break;   
                 case RwSections.RwSkin: 
                     skin = this.readSkin(vertexCount);
                     break;
+                case RwSections.RwBinMesh: 
+                    binMesh = this.readBinMesh();
+                    break;   
                 default:
                     console.debug(`Section type ${header.sectionType} (${header.sectionType.toString(16)}) not found at offset (${this.getPosition().toString(16)}). Skipping ${header.sectionSize} bytes.`);
                     this.skip(header.sectionSize);
                     break;
-            }            
+            }          
+            this.setPosition(currentPosition);  
         }
 
         this.setPosition(position + sectionSize);
