@@ -71,6 +71,7 @@ export interface RwGeometry {
     textureMappingInformation: RwTextureCoordinate[][],
     hasVertices: boolean,
     hasNormals: boolean,
+    isTriangleStrip: boolean,
     triangleInformation: RwTriangle[],
     vertexInformation: RwVector3[],
     normalInformation: RwVector3[],
@@ -362,7 +363,7 @@ export class DffParser extends RwFile {
             _diffuse = this.readFloat();
         }
 
-        const _isTriangleStrip = (flags & (1 << 0)) !== 0;
+        const isTriangleStrip = (flags & (1 << 0)) !== 0;
         const _vertexTranslation = (flags & (1 << 1)) !== 0;
         const isTexturedUV1 = (flags & (1 << 2)) !== 0;
         const isGeometryPrelit = (flags & (1 << 3)) !== 0;
@@ -465,6 +466,7 @@ export class DffParser extends RwFile {
             boundingSphere,
             hasVertices,
             hasNormals,
+            isTriangleStrip,
             vertexColorInformation,
             vertexInformation,
             normalInformation,
