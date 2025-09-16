@@ -34,8 +34,7 @@
     "build": "tsc -p tsconfig.json",
     "dev": "tsc -p tsconfig.json --watch",
     "prepare": "npm run build",
-    "test": "jest",
-    "start": "tsc main.ts && node main.js"
+    "test": "jest"
   },
   "files": [
     "lib",

@@ -28,9 +28,12 @@ describe('dff parsing - infernus', () => {
     });
 
     test('atomics - index matching', () => {
-        expect(rwDff.clumps[0].atomics[1]).toBe(14);
-        expect(rwDff.clumps[0].atomics[4]).toBe(31);
-        expect(rwDff.clumps[0].atomics[14]).toBe(21);
+        if (!rwDff.clumps[0].atomics || rwDff.clumps[0].atomics.length == 0) {
+            throw new Error("Atomics is missing");
+        }
+        expect(rwDff.clumps[0].atomics[1].frameIndex).toBe(14);
+        expect(rwDff.clumps[0].atomics[4].frameIndex).toBe(31);
+        expect(rwDff.clumps[0].atomics[14].frameIndex).toBe(21);
     });
 
     test('dummies - length', () => {
@@ -304,22 +307,22 @@ describe('dff parsing - infernus', () => {
     test('geometries - bin mesh', () => {
         const geometryList = rwDff.clumps[0].geometryList;
 
-        expect(geometryList!.geometries[0].binMesh.meshCount).toBe(4);
-        expect(geometryList!.geometries[14].binMesh.meshCount).toBe(16);
+        expect(geometryList!.geometries[0].binMesh!.meshCount).toBe(4);
+        expect(geometryList!.geometries[14].binMesh!.meshCount).toBe(16);
 
-        expect(geometryList!.geometries[0].binMesh.meshes).toHaveLength(4);
-        expect(geometryList!.geometries[14].binMesh.meshes).toHaveLength(16);
+        expect(geometryList!.geometries[0].binMesh!.meshes).toHaveLength(4);
+        expect(geometryList!.geometries[14].binMesh!.meshes).toHaveLength(16);
 
-        expect(geometryList!.geometries[0].binMesh.meshes[0].indexCount).toBe(4);
-        expect(geometryList!.geometries[0].binMesh.meshes[3].indexCount).toBe(210);
+        expect(geometryList!.geometries[0].binMesh!.meshes[0].indexCount).toBe(4);
+        expect(geometryList!.geometries[0].binMesh!.meshes[3].indexCount).toBe(210);
 
-        expect(geometryList!.geometries[0].binMesh.meshes[0].indices).toHaveLength(4);
-        expect(geometryList!.geometries[0].binMesh.meshes[3].indices).toHaveLength(210);
+        expect(geometryList!.geometries[0].binMesh!.meshes[0].indices).toHaveLength(4);
+        expect(geometryList!.geometries[0].binMesh!.meshes[3].indices).toHaveLength(210);
 
-        expect(geometryList!.geometries[14].binMesh.meshes[15].indices[0]).toBe(1937);
-        expect(geometryList!.geometries[14].binMesh.meshes[15].indices[100]).toBe(1909);
+        expect(geometryList!.geometries[14].binMesh!.meshes[15].indices[0]).toBe(1937);
+        expect(geometryList!.geometries[14].binMesh!.meshes[15].indices[100]).toBe(1909);
 
-        expect(geometryList!.geometries[14].binMesh.meshes[14].materialIndex).toBe(11);
+        expect(geometryList!.geometries[14].binMesh!.meshes[14].materialIndex).toBe(11);
     });
 
     test('geometries - bounding sphere', () => {

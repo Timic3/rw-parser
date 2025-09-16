@@ -1,7 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { DffParser, RwDff } from '../../src/index';
-import exp from 'node:constants';
 
 
 // This test for skin and bones sections
@@ -119,7 +118,7 @@ describe('dff parsing - wuzimu', () => {
     });
 
     test('skin - bone count', () => {
-        const skin = rwDff.clumps[0].geometryList.geometries[0].skin!;
+        const skin = rwDff.clumps[0].geometryList!.geometries[0].skin!;
 
         expect(skin.boneCount).toStrictEqual(32);
         expect(skin.usedBoneCount).toStrictEqual(31);
@@ -127,7 +126,7 @@ describe('dff parsing - wuzimu', () => {
     });
 
     test('skin - vertex weights', () => {
-        const skin = rwDff.clumps[0].geometryList.geometries[0].skin!;
+        const skin = rwDff.clumps[0].geometryList!.geometries[0].skin!;
         
         expect(skin.maxWeightsPerVertex).toStrictEqual(4);
         expect(skin.vertexWeights.length).toStrictEqual(990);
@@ -149,7 +148,7 @@ describe('dff parsing - wuzimu', () => {
     });
 
     test('skin - bone-vertex map', () => {
-        const skin = rwDff.clumps[0].geometryList.geometries[0].skin!;
+        const skin = rwDff.clumps[0].geometryList!.geometries[0].skin!;
         
         expect(skin.boneVertexIndices[0][0]).toStrictEqual(28);
         expect(skin.boneVertexIndices[0][1]).toStrictEqual(24);
@@ -168,7 +167,7 @@ describe('dff parsing - wuzimu', () => {
     });
 
     test('skin - inverse bone matrices', () => {
-        const skin = rwDff.clumps[0].geometryList.geometries[0].skin!;
+        const skin = rwDff.clumps[0].geometryList!.geometries[0].skin!;
         
         expect(skin.inverseBoneMatrices.length).toStrictEqual(32);
 
