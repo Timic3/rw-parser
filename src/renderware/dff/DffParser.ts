@@ -432,7 +432,6 @@ export class DffParser extends RwFile {
         let materialList = this.readMaterialList();
 
         sectionSize = this.readSectionHeader().sectionSize;
-        position = this.getPosition();
 
         let binMesh = undefined;
         let skin = undefined;
@@ -441,24 +440,23 @@ export class DffParser extends RwFile {
         while (relativePosition < sectionSize) {
             const header = this.readSectionHeader();
             relativePosition += header.sectionSize + 12;
-            const currentPosition = this.getPosition() + header.sectionSize;
-            
+            position = this.getPosition();
+
             switch(header.sectionType) {
-                case RwSections.RwSkin: 
+                case RwSections.RwBinMesh:
+                    binMesh = this.readBinMesh();
+                    break;
+                case RwSections.RwSkin:
                     skin = this.readSkin(vertexCount);
                     break;
-                case RwSections.RwBinMesh: 
-                    binMesh = this.readBinMesh();
-                    break;   
                 default:
                     console.debug(`Section type ${header.sectionType} (${header.sectionType.toString(16)}) not found at offset (${this.getPosition().toString(16)}). Skipping ${header.sectionSize} bytes.`);
                     this.skip(header.sectionSize);
                     break;
-            }          
-            this.setPosition(currentPosition);  
-        }
+            }
 
-        this.setPosition(position + sectionSize);
+            this.setPosition(position + header.sectionSize);
+        }
 
         return {
             textureCoordinatesCount,
@@ -497,7 +495,7 @@ export class DffParser extends RwFile {
         };
     }
 
-    public readSkin(vertexCount : number): RwSkin {                                                                                
+    public readSkin(vertexCount : number): RwSkin {
         const boneCount = this.readUint8();
         const usedBoneCount = this.readUint8();
         const maxWeightsPerVertex = this.readUint8();
@@ -505,9 +503,9 @@ export class DffParser extends RwFile {
         this.skip(1);               // Padding
         this.skip(usedBoneCount);   // Skipping special indices
 
-        const boneVertexIndices: number[][] = [];                  
-        const vertexWeights: number[][] = [];     
-        const inverseBoneMatrices: RwMatrix4[] = [];     
+        const boneVertexIndices: number[][] = [];
+        const vertexWeights: number[][] = [];
+        const inverseBoneMatrices: RwMatrix4[] = [];
 
         for (let i = 0; i < vertexCount; i++) {
             const indices: number[] = [];
@@ -543,7 +541,7 @@ export class DffParser extends RwFile {
             boneVertexIndices,
             vertexWeights,
             inverseBoneMatrices,
-        }                                                           
+        }
     }
 
     public readAnimNode() :RwAnimNode {
