@@ -6,17 +6,18 @@ import RwVersion from '../utils/RwVersion';
 export interface RwDff {
     version: string,
     versionNumber: number,
-    geometryList: RwGeometryList | null,
-    frameList: RwFrameList | null,
-    atomics: number[],
-    dummies: string[],
-    animNodes: RwAnimNode[],
+    clumps: RwClump[],
 }
 
 export interface RwClump {
     atomicCount: number,
     lightCount?: number,
     cameraCount?: number,
+    geometryList: RwGeometryList | null,
+    frameList: RwFrameList | null,
+    atomics: RwAtomic[] | null,
+    dummies: string[],
+    animNodes: RwAnimNode[],
 }
 
 export interface RwAnimNode {
@@ -30,7 +31,6 @@ export interface RwBone {
     boneIndex: number,
     flags: number,
 }
-
 
 export interface RwFrame {
     rotationMatrix: RwMatrix3,
@@ -71,13 +71,14 @@ export interface RwGeometry {
     textureMappingInformation: RwTextureCoordinate[][],
     hasVertices: boolean,
     hasNormals: boolean,
+    isTriangleStrip: boolean,
     triangleInformation: RwTriangle[],
     vertexInformation: RwVector3[],
     normalInformation: RwVector3[],
     boundingSphere?: RwSphere,
     materialList: RwMaterialList,
-    binMesh: RwBinMesh,
-    skin?: RwSkin, 
+    binMesh?: RwBinMesh,
+    skin?: RwSkin,
 }
 
 export interface RwGeometryList {
@@ -141,6 +142,7 @@ export interface RwVector3 {
     y: number,
     z: number,
 }
+
 export interface RwVector4 {
     x: number,
     y: number,
@@ -172,11 +174,7 @@ export class DffParser extends RwFile {
     parse(): RwDff {
         let version: string | undefined;
         let versionNumber: number | undefined;
-        let atomics: number[] = [];
-        let dummies: string[] = [];
-        let animNodes: RwAnimNode[] = [];
-        let geometryList: RwGeometryList | null = null;
-        let frameList: RwFrameList | null = null;
+        let clumps: RwClump[] = [];
 
         while (this.getPosition() < this.getSize()) {
             const header = this.readSectionHeader();
@@ -188,13 +186,61 @@ export class DffParser extends RwFile {
             if (header.sectionSize == 0) {
                 continue;
             }
+            versionNumber = RwVersion.unpackVersion(header.versionNumber);
+            version = RwVersion.versions[versionNumber];
 
             switch (header.sectionType) {
                 case RwSections.RwClump:
-                    // Multiple clumps are used in SA player models, so we should eventually support it
-                    versionNumber = RwVersion.unpackVersion(header.versionNumber);
-                    version = RwVersion.versions[versionNumber];
+                    clumps.push(this.readClump(header.sectionSize));
                     break;
+                default:
+                    console.debug(`Section type ${header.sectionType} (${header.sectionType.toString(16)}) not found at offset (${this.getPosition().toString(16)}). Skipping ${header.sectionSize} bytes.`);
+                    this.skip(header.sectionSize);
+                    break;
+            }
+        }
+
+        if (!version || !versionNumber) {
+            throw new RwParseStructureNotFoundError('version');
+        }
+
+        return {
+            version: version,
+            versionNumber: versionNumber,
+            clumps: clumps,
+        };
+    }
+
+    public readClump(clumpSize: number): RwClump {
+        const { versionNumber } = this.readSectionHeader();
+        let atomics: RwAtomic[] = [];
+        let dummies: string[] = [];
+        let geometryList: RwGeometryList | null = null;
+        let frameList: RwFrameList | null = null;
+        let animNodes: RwAnimNode[] = [];
+
+        const atomicCount = this.readUint32();
+
+        let lightCount;
+        let cameraCount;
+        if (versionNumber > 0x33000) {
+            lightCount = this.readUint32();
+            cameraCount = this.readUint32();
+        }
+        const startPosition = this.getPosition();
+
+           while (this.getPosition() - startPosition < clumpSize - 24) {
+            const header = this.readSectionHeader();
+
+            if (header.sectionType === 0) {
+                break;
+            }
+
+            if (header.sectionSize == 0) {
+                continue;
+            }
+
+            switch (header.sectionType) {
                 case RwSections.RwFrameList:
                     frameList = this.readFrameList();
                     break;
@@ -217,8 +263,7 @@ export class DffParser extends RwFile {
                     geometryList = this.readGeometryList();
                     break;
                 case RwSections.RwAtomic:
-                    const atomic = this.readAtomic();
-                    atomics[atomic.geometryIndex] = atomic.frameIndex;
+                    atomics.push(this.readAtomic());
                     break;
                 case RwSections.RwNodeName:
                     // For some reason, this frame is outside RwExtension.
@@ -228,6 +273,8 @@ export class DffParser extends RwFile {
                     // For III / VC models
                     animNodes.push(this.readAnimNode());
                     break;
+                case RwSections.RwClump:
+                    break;    
                 default:
                     console.debug(`Section type ${header.sectionType} (${header.sectionType.toString(16)}) not found at offset (${this.getPosition().toString(16)}). Skipping ${header.sectionSize} bytes.`);
                     this.skip(header.sectionSize);
@@ -235,34 +282,16 @@ export class DffParser extends RwFile {
             }
         }
 
-        if (!version || !versionNumber) {
-            throw new RwParseStructureNotFoundError('version');
-        }
-
-        return {
-            version: version,
-            versionNumber: versionNumber,
-            geometryList: geometryList,
-            frameList: frameList,
-            atomics: atomics,
-            dummies: dummies,
-            animNodes: animNodes,
-        };
-    }
-
-    public readClump(): RwClump {
-        const { versionNumber } = this.readSectionHeader();
-
-        const atomicCount = this.readUint32();
-
-        let lightCount;
-        let cameraCount;
-        if (versionNumber > 0x33000) {
-            lightCount = this.readUint32();
-            cameraCount = this.readUint32();
-        }
-
-        return { atomicCount, lightCount, cameraCount };
+        return { 
+            atomicCount, 
+            lightCount, 
+            cameraCount,
+            geometryList,
+            frameList,
+            atomics,
+            dummies,
+            animNodes,
+             };
     }
 
     public readFrameList(): RwFrameList {
@@ -273,40 +302,39 @@ export class DffParser extends RwFile {
         let frames: RwFrame[] = [];
 
         for (let i = 0; i < frameCount; i++) {
-            // All these could probably be moved to readFrameData()
-
-            const rotationMatrix: RwMatrix3 = {
-                right: { x: this.readFloat(), y: this.readFloat(), z: this.readFloat() },
-                up: { x: this.readFloat(), y: this.readFloat(), z: this.readFloat() },
-                at: { x: this.readFloat(), y: this.readFloat(), z: this.readFloat() },
-            }
-
-            const coordinatesOffset: RwVector3 = { x: this.readFloat(), y: this.readFloat(), z: this.readFloat() };
-
-            const parentFrame = this.readInt32();
-
-            // Skip matrix creation internal flags
-            // They are read by the game but are not used
-            this.skip(4);
-
-            frames.push({ rotationMatrix, coordinatesOffset, parentFrame });
+            frames.push(this.readFrameData());
         }
 
         return { frameCount, frames };
     }
 
+    public readFrameData(): RwFrame {
+        const rotationMatrix: RwMatrix3 = {
+            right: { x: this.readFloat(), y: this.readFloat(), z: this.readFloat() },
+            up: { x: this.readFloat(), y: this.readFloat(), z: this.readFloat() },
+            at: { x: this.readFloat(), y: this.readFloat(), z: this.readFloat() },
+        }
+
+        const coordinatesOffset: RwVector3 = { x: this.readFloat(), y: this.readFloat(), z: this.readFloat() };
+
+        const parentFrame = this.readInt32();
+
+        // Skip matrix creation internal flags
+        // They are read by the game but are not used
+        this.skip(4);
+
+        return { rotationMatrix, coordinatesOffset, parentFrame };
+    }
+
     public readGeometryList(): RwGeometryList {
         const header = this.readSectionHeader();
-
         const geometricObjectCount = this.readUint32();
 
         let geometries: RwGeometry[] = [];
 
         for (let i = 0; i < geometricObjectCount; i++) {
             this.readSectionHeader();
-            this.readSectionHeader();
-            const versionNumber = RwVersion.unpackVersion(header.versionNumber);
-            const geometryData = this.readGeometry(versionNumber);
+            const geometryData = this.readGeometry(header.versionNumber);
             geometries.push(geometryData);
         }
 
@@ -314,6 +342,9 @@ export class DffParser extends RwFile {
     }
 
     public readGeometry(versionNumber: number): RwGeometry {
+        let sectionSize = this.readSectionHeader().sectionSize;
+        let position = this.getPosition();
+
         const flags = this.readUint16();
         const textureCoordinatesCount = this.readUint8();
         const _nativeGeometryFlags = this.readUint8();
@@ -332,7 +363,7 @@ export class DffParser extends RwFile {
             _diffuse = this.readFloat();
         }
 
-        const _isTriangleStrip = (flags & (1 << 0)) !== 0;
+        const isTriangleStrip = (flags & (1 << 0)) !== 0;
         const _vertexTranslation = (flags & (1 << 1)) !== 0;
         const isTexturedUV1 = (flags & (1 << 2)) !== 0;
         const isGeometryPrelit = (flags & (1 << 3)) !== 0;
@@ -396,17 +427,36 @@ export class DffParser extends RwFile {
             }
         }
 
+        this.setPosition(position + sectionSize);
+
         let materialList = this.readMaterialList();
-        let sectionSize = this.readSectionHeader().sectionSize;
-        let position = this.getPosition();
-        let binMesh = this.readBinMesh();
+
+        sectionSize = this.readSectionHeader().sectionSize;
+
+        let binMesh = undefined;
         let skin = undefined;
 
-        if (this.readSectionHeader().sectionType == RwSections.RwSkin) {
-            skin = this.readSkin(vertexCount);
-        }
+        let relativePosition = 0;
+        while (relativePosition < sectionSize) {
+            const header = this.readSectionHeader();
+            relativePosition += header.sectionSize + 12;
+            position = this.getPosition();
 
-        this.setPosition(position + sectionSize);
+            switch(header.sectionType) {
+                case RwSections.RwBinMesh:
+                    binMesh = this.readBinMesh();
+                    break;
+                case RwSections.RwSkin:
+                    skin = this.readSkin(vertexCount);
+                    break;
+                default:
+                    console.debug(`Section type ${header.sectionType} (${header.sectionType.toString(16)}) not found at offset (${this.getPosition().toString(16)}). Skipping ${header.sectionSize} bytes.`);
+                    this.skip(header.sectionSize);
+                    break;
+            }
+
+            this.setPosition(position + header.sectionSize);
+        }
 
         return {
             textureCoordinatesCount,
@@ -414,6 +464,7 @@ export class DffParser extends RwFile {
             boundingSphere,
             hasVertices,
             hasNormals,
+            isTriangleStrip,
             vertexColorInformation,
             vertexInformation,
             normalInformation,
@@ -425,8 +476,6 @@ export class DffParser extends RwFile {
     }
 
     public readBinMesh(): RwBinMesh {
-        this.readSectionHeader();
-
         // Flags (0: triangle list, 1: triangle strip)
         this.skip(4);
 
@@ -446,7 +495,7 @@ export class DffParser extends RwFile {
         };
     }
 
-    public readSkin(vertexCount : number): RwSkin {                                                                                
+    public readSkin(vertexCount : number): RwSkin {
         const boneCount = this.readUint8();
         const usedBoneCount = this.readUint8();
         const maxWeightsPerVertex = this.readUint8();
@@ -454,9 +503,9 @@ export class DffParser extends RwFile {
         this.skip(1);               // Padding
         this.skip(usedBoneCount);   // Skipping special indices
 
-        const boneVertexIndices: number[][] = [];                  
-        const vertexWeights: number[][] = [];     
-        const inverseBoneMatrices: RwMatrix4[] = [];     
+        const boneVertexIndices: number[][] = [];
+        const vertexWeights: number[][] = [];
+        const inverseBoneMatrices: RwMatrix4[] = [];
 
         for (let i = 0; i < vertexCount; i++) {
             const indices: number[] = [];
@@ -492,7 +541,7 @@ export class DffParser extends RwFile {
             boneVertexIndices,
             vertexWeights,
             inverseBoneMatrices,
-        }                                                           
+        }
     }
 
     public readAnimNode() :RwAnimNode {
