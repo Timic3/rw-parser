@@ -442,7 +442,7 @@ export class DffParser extends RwFile {
             relativePosition += header.sectionSize + 12;
             position = this.getPosition();
 
-            switch(header.sectionType) {
+            switch (header.sectionType) {
                 case RwSections.RwBinMesh:
                     binMesh = this.readBinMesh();
                     break;
