@@ -291,7 +291,7 @@ export class DffParser extends RwFile {
             atomics,
             dummies,
             animNodes,
-             };
+        };
     }
 
     public readFrameList(): RwFrameList {
