@@ -229,7 +229,7 @@ export class DffParser extends RwFile {
         }
         const startPosition = this.getPosition();
 
-           while (this.getPosition() - startPosition < clumpSize - 24) {
+        while (this.getPosition() - startPosition < clumpSize - 24) {
             const header = this.readSectionHeader();
 
             if (header.sectionType === 0) {
