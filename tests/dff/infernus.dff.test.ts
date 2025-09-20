@@ -24,28 +24,31 @@ describe('dff parsing - infernus', () => {
     });
 
     test('atomics - length', () => {
-        expect(rwDff.atomics).toHaveLength(15);
+        expect(rwDff.clumps[0].atomics).toHaveLength(15);
     });
 
     test('atomics - index matching', () => {
-        expect(rwDff.atomics[1]).toBe(14);
-        expect(rwDff.atomics[4]).toBe(31);
-        expect(rwDff.atomics[14]).toBe(21);
+        if (!rwDff.clumps[0].atomics || rwDff.clumps[0].atomics.length == 0) {
+            throw new Error("Atomics is missing");
+        }
+        expect(rwDff.clumps[0].atomics[1].frameIndex).toBe(14);
+        expect(rwDff.clumps[0].atomics[4].frameIndex).toBe(31);
+        expect(rwDff.clumps[0].atomics[14].frameIndex).toBe(21);
     });
 
     test('dummies - length', () => {
-        expect(rwDff.dummies).toHaveLength(36);
+        expect(rwDff.clumps[0].dummies).toHaveLength(36);
     });
 
     test('dummies - names', () => {
-        expect(rwDff.dummies[0]).toBe('infernus');
-        expect(rwDff.dummies[2]).toBe('wheel_lb_dummy');
-        expect(rwDff.dummies[3]).toBe('wheel_rf_dummy');
-        expect(rwDff.dummies[35]).toBe('wheel');
+        expect(rwDff.clumps[0].dummies[0]).toBe('infernus');
+        expect(rwDff.clumps[0].dummies[2]).toBe('wheel_lb_dummy');
+        expect(rwDff.clumps[0].dummies[3]).toBe('wheel_rf_dummy');
+        expect(rwDff.clumps[0].dummies[35]).toBe('wheel');
     })
 
     test('frames - length', () => {
-        const frameList = rwDff.frameList;
+        const frameList = rwDff.clumps[0].frameList;
 
         expect(frameList).toBeDefined();
         expect(frameList!.frameCount).toBe(36);
@@ -53,7 +56,7 @@ describe('dff parsing - infernus', () => {
     });
 
     test('frames - parent frames', () => {
-        const frameList = rwDff.frameList;
+        const frameList = rwDff.clumps[0].frameList;
 
         expect(frameList!.frames[0].parentFrame).toBe(-1);
         expect(frameList!.frames[1].parentFrame).toBe(0);
@@ -64,7 +67,7 @@ describe('dff parsing - infernus', () => {
     });
 
     test('frames - coordinate offsets', () => {
-        const frameList = rwDff.frameList;
+        const frameList = rwDff.clumps[0].frameList;
 
         expect(frameList!.frames[0].coordinatesOffset).toStrictEqual({ x: 0, y: 0, z: 0 });
         expect(frameList!.frames[1].coordinatesOffset).toStrictEqual({
@@ -76,7 +79,7 @@ describe('dff parsing - infernus', () => {
     });
 
     test('frames - rotation matrices', () => {
-        const frameList = rwDff.frameList;
+        const frameList = rwDff.clumps[0].frameList;
 
         expect(frameList!.frames[0].rotationMatrix).toStrictEqual({ right: { x: 1, y: 0, z: 0 }, up: { x: 0, y: 1, z: 0}, at: { x: 0, y: 0, z: 1} });
         expect(frameList!.frames[20].rotationMatrix).toStrictEqual({ right: { x: 1, y: 0, z: 0 }, up: { x: 0, y: 1, z: 0}, at: { x: 0, y: 0, z: 1} });
@@ -84,7 +87,7 @@ describe('dff parsing - infernus', () => {
     });
 
     test('geometries - length', () => {
-        const geometryList = rwDff.geometryList;
+        const geometryList = rwDff.clumps[0].geometryList;
 
         expect(geometryList).toBeDefined();
         expect(geometryList!.geometricObjectCount).toBe(15);
@@ -92,7 +95,7 @@ describe('dff parsing - infernus', () => {
     });
 
     test('geometries - vertices', () => {
-        const geometryList = rwDff.geometryList;
+        const geometryList = rwDff.clumps[0].geometryList;
 
         expect(geometryList!.geometries[0].hasVertices).toBeTruthy();
         expect(geometryList!.geometries[14].hasVertices).toBeTruthy();
@@ -134,7 +137,7 @@ describe('dff parsing - infernus', () => {
     });
 
     test('geometries - normals', () => {
-        const geometryList = rwDff.geometryList;
+        const geometryList = rwDff.clumps[0].geometryList;
 
         expect(geometryList!.geometries[0].hasNormals).toBeTruthy();
         expect(geometryList!.geometries[14].hasNormals).toBeTruthy();
@@ -176,7 +179,7 @@ describe('dff parsing - infernus', () => {
     });
 
     test('geometries - triangles', () => {
-        const geometryList = rwDff.geometryList;
+        const geometryList = rwDff.clumps[0].geometryList;
 
         expect(geometryList!.geometries[0].triangleInformation).toHaveLength(250);
         expect(geometryList!.geometries[14].triangleInformation).toHaveLength(1710);
@@ -201,21 +204,21 @@ describe('dff parsing - infernus', () => {
     });
 
     test('geometries - vertex colors', () => {
-        const geometryList = rwDff.geometryList;
+        const geometryList = rwDff.clumps[0].geometryList;
 
         expect(geometryList!.geometries[0].vertexColorInformation).toHaveLength(0);
         expect(geometryList!.geometries[14].vertexColorInformation).toHaveLength(0);
     });
 
     test('geometries - vertex colors', () => {
-        const geometryList = rwDff.geometryList;
+        const geometryList = rwDff.clumps[0].geometryList;
 
         expect(geometryList!.geometries[0].vertexColorInformation).toHaveLength(0);
         expect(geometryList!.geometries[14].vertexColorInformation).toHaveLength(0);
     });
 
     test('geometries - texture mapping', () => {
-        const geometryList = rwDff.geometryList;
+        const geometryList = rwDff.clumps[0].geometryList;
 
         expect(geometryList!.geometries[0].textureCoordinatesCount).toBe(1);
         expect(geometryList!.geometries[3].textureCoordinatesCount).toBe(1);
@@ -261,7 +264,7 @@ describe('dff parsing - infernus', () => {
     });
     
     test('geometries - materials', () => {
-        const geometryList = rwDff.geometryList;
+        const geometryList = rwDff.clumps[0].geometryList;
 
         expect(geometryList!.geometries[0].materialList.materialInstanceCount).toBe(4);
         expect(geometryList!.geometries[14].materialList.materialInstanceCount).toBe(16);
@@ -302,28 +305,28 @@ describe('dff parsing - infernus', () => {
     });
 
     test('geometries - bin mesh', () => {
-        const geometryList = rwDff.geometryList;
+        const geometryList = rwDff.clumps[0].geometryList;
 
-        expect(geometryList!.geometries[0].binMesh.meshCount).toBe(4);
-        expect(geometryList!.geometries[14].binMesh.meshCount).toBe(16);
+        expect(geometryList!.geometries[0].binMesh!.meshCount).toBe(4);
+        expect(geometryList!.geometries[14].binMesh!.meshCount).toBe(16);
 
-        expect(geometryList!.geometries[0].binMesh.meshes).toHaveLength(4);
-        expect(geometryList!.geometries[14].binMesh.meshes).toHaveLength(16);
+        expect(geometryList!.geometries[0].binMesh!.meshes).toHaveLength(4);
+        expect(geometryList!.geometries[14].binMesh!.meshes).toHaveLength(16);
 
-        expect(geometryList!.geometries[0].binMesh.meshes[0].indexCount).toBe(4);
-        expect(geometryList!.geometries[0].binMesh.meshes[3].indexCount).toBe(210);
+        expect(geometryList!.geometries[0].binMesh!.meshes[0].indexCount).toBe(4);
+        expect(geometryList!.geometries[0].binMesh!.meshes[3].indexCount).toBe(210);
 
-        expect(geometryList!.geometries[0].binMesh.meshes[0].indices).toHaveLength(4);
-        expect(geometryList!.geometries[0].binMesh.meshes[3].indices).toHaveLength(210);
+        expect(geometryList!.geometries[0].binMesh!.meshes[0].indices).toHaveLength(4);
+        expect(geometryList!.geometries[0].binMesh!.meshes[3].indices).toHaveLength(210);
 
-        expect(geometryList!.geometries[14].binMesh.meshes[15].indices[0]).toBe(1937);
-        expect(geometryList!.geometries[14].binMesh.meshes[15].indices[100]).toBe(1909);
+        expect(geometryList!.geometries[14].binMesh!.meshes[15].indices[0]).toBe(1937);
+        expect(geometryList!.geometries[14].binMesh!.meshes[15].indices[100]).toBe(1909);
 
-        expect(geometryList!.geometries[14].binMesh.meshes[14].materialIndex).toBe(11);
+        expect(geometryList!.geometries[14].binMesh!.meshes[14].materialIndex).toBe(11);
     });
 
     test('geometries - bounding sphere', () => {
-        const geometryList = rwDff.geometryList;
+        const geometryList = rwDff.clumps[0].geometryList;
 
         expect(geometryList!.geometries[0].boundingSphere).toStrictEqual({
             vector: {
